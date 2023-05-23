@@ -1,0 +1,32 @@
+{
+    "name": "@soketi/impl",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "types": "types/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "lint": "eslint --ext .js,.ts ./src --fix",
+        "test": "NODE_OPTIONS=\"--trace-warnings\" vitest --dir=tests --coverage",
+        "test:watch": "npm run test -- --watch"
+    },
+    "devDependencies": {
+        "@cloudflare/workers-types": "^4.20230518.0",
+        "@types/jest": "^29.5.0",
+        "@types/pusher-js": "^5.1.0",
+        "@typescript-eslint/eslint-plugin": "^5.59.5",
+        "@typescript-eslint/parser": "^5.59.5",
+        "@vitest/coverage-c8": "^0.31.0",
+        "@vitest/ui": "^0.31.0",
+        "eslint": "^8.40.0",
+        "typescript": "^5.0",
+        "vitest": "^0.31.0"
+    },
+    "dependencies": {
+        "pusher": "^5.0.0",
+        "pusher-js": "^8.0.0"
+    },
+    "files": [
+        "types/index.d.ts"
+    ]
+}

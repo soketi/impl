@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "CommonJS",
+        "lib": ["ES2020"],
+        "esModuleInterop": true,
+        "types": ["@cloudflare/workers-types"],
+        "paths": {
+            "@soketi/impl": [
+                "./types/index.d.ts",
+            ],
+            "@/*": [
+                "./src/*"
+            ],
+            "@": [
+                "./src"
+            ],
+            "@gossiper": [
+                "./src/gossiper"
+            ],
+            "@gossiper/*": [
+                "./src/gossiper/*"
+            ],
+            "@pusher": [
+                "./src/pusher"
+            ],
+            "@pusher/*": [
+                "./src/pusher/*"
+            ],
+            "@ws": [
+                "./src/ws"
+            ],
+            "@ws/*": [
+                "./src/ws/*"
+            ],
+        },
+    }
+}
