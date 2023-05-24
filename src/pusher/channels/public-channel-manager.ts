@@ -1,7 +1,10 @@
 import type * as FN from '@soketi/impl';
 
 export class PublicChannelManager implements FN.Pusher.Channels.PublicChannelManager {
-    constructor(protected connections: FN.Pusher.PusherWS.Connections) {
+    constructor(
+        protected readonly connections: FN.Pusher.PusherWS.PusherConnections,
+        protected readonly app: FN.Pusher.PusherApps.App,
+    ) {
         //
     }
 

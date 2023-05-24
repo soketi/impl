@@ -9,7 +9,7 @@ export abstract class Gossiper {
         metadata?: FN.JSON.Object,
     ) {
         this.protocols.set(protocol, {
-            responseHandler,
+            responseHandler: responseHandler.bind(this),
             metadata,
         });
     }

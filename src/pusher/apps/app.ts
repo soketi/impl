@@ -1,6 +1,6 @@
 import type * as FN from '@soketi/impl';
 
-export class App implements FN.Pusher.PusherApps.App {
+export abstract class App implements FN.Pusher.PusherApps.App {
     id: string;
     key: string;
     secret: string;
@@ -188,16 +188,17 @@ export class App implements FN.Pusher.PusherApps.App {
         return app;
     }
 
-    async signingTokenFromRequest(request: Request, env: FN.Pusher.PusherEnvironment): Promise<string> {
-        const url = new URL(request.url);
+    abstract calculateBodyMd5(body: string): Promise<string>;
+    abstract createToken(params: string): Promise<string>;
+    abstract sha256(): Promise<string>;
 
-        const params = {
-            auth_key: this.key,
-            ...[...url.searchParams].reduce((params, [key, value]) => {
-                params[key] = value;
-                return params;
-            }, {}),
-        };
+    async calculateSigningToken(
+        params: { [key: string]: string },
+        method: string,
+        path: string,
+        body?: string,
+    ): Promise<string> {;
+        params['auth_key'] = this.key;
 
         delete params['auth_signature'];
         delete params['body_md5']
@@ -205,20 +206,11 @@ export class App implements FN.Pusher.PusherApps.App {
         delete params['appKey'];
         delete params['channelName'];
 
-        let body = await request.clone().text();
-
         if (body) {
-            let encoder = new TextEncoder();
-            let bufferToken = new Uint8Array(
-                await crypto.subtle.digest({ name: 'MD5' }, encoder.encode(body)),
-            );
-
-            let bodyToken = Array.prototype.map.call(bufferToken, x => ('00' + x.toString(16)).slice(-2)).join('');
-
-            params['body_md5'] = bodyToken;
+            params['body_md5'] = await this.calculateBodyMd5(body);
         }
 
-        return await this.createToken([request.method, new URL(request.url).pathname, App.toOrderedArray(params).join('&')].join("\n"));
+        return await this.createToken([method, path, App.toOrderedArray(params).join('&')].join("\n"));
     }
 
     protected extractFromPassedKeys(app: FN.JSON.Object, parameters: string[], defaultValue: any): any {
@@ -249,37 +241,6 @@ export class App implements FN.Pusher.PusherApps.App {
         }
 
         return [];
-    }
-
-    async createToken(params: string): Promise<string> {
-        let encoder = new TextEncoder();
-
-        const key = await crypto.subtle.importKey(
-            'raw',
-            encoder.encode(this.secret),
-            { name: 'HMAC', hash: 'SHA-256' },
-            false,
-            ['sign'],
-        );
-
-        let bufferToken = new Uint8Array(
-            await crypto.subtle.sign('HMAC', key, encoder.encode(params)),
-        );
-
-        return Array.prototype.map.call(bufferToken, x => ('00' + x.toString(16)).slice(-2)).join('');
-    }
-
-    async sha256(): Promise<string> {
-        let encoder = new TextEncoder();
-
-        let digest = await crypto.subtle.digest(
-            { name: 'SHA-256' },
-            encoder.encode(JSON.stringify(this.toObject())),
-        );
-
-        let bufferToken = new Uint8Array(digest);
-
-        return Array.prototype.map.call(bufferToken, x => ('00' + x.toString(16)).slice(-2)).join('');
     }
 
     protected static toOrderedArray(map): string[] {

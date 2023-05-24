@@ -3,10 +3,14 @@ import { PrivateChannelManager } from './private-channel-manager';
 import { Utils } from '@/pusher/utils';
 
 export class PresenceChannelManager extends PrivateChannelManager implements FN.Pusher.Channels.PresenceChannelManager {
-    async join(conn: FN.Pusher.PusherWS.PusherConnection, channel: string, message?: FN.Pusher.PusherWS.PusherMessage): Promise<FN.Pusher.Channels.JoinResponse> {
-        let membersCount = await this.replica.getChannelMembersCount(channel);
+    async join(
+        conn: FN.Pusher.PusherWS.PusherConnection,
+        channel: string,
+        message?: FN.Pusher.PusherWS.PusherMessage,
+    ): Promise<FN.Pusher.Channels.JoinResponse> {
+        let membersCount = await this.connections.getChannelMembersCount(channel);
 
-        if (membersCount + 1 > this.replica.app.maxPresenceMembersPerChannel) {
+        if (membersCount + 1 > this.app.maxPresenceMembersPerChannel) {
             return {
                 success: false,
                 conn,
@@ -18,7 +22,7 @@ export class PresenceChannelManager extends PrivateChannelManager implements FN.
 
         let member: FN.Pusher.PusherWS.Presence.PresenceMember = JSON.parse(message.data.channel_data);
         let memberSizeInKb = await Utils.dataToKilobytes(member.user_info);
-        let maxMemberSizeInKb = this.replica.app.maxPresenceMemberSizeInKb;
+        let maxMemberSizeInKb = this.app.maxPresenceMemberSizeInKb;
 
         if (memberSizeInKb > maxMemberSizeInKb) {
             return {
@@ -42,7 +46,10 @@ export class PresenceChannelManager extends PrivateChannelManager implements FN.
         };
     }
 
-    async leave(conn: FN.Pusher.PusherWS.PusherConnection, channel: string): Promise<FN.Pusher.Channels.LeaveResponse> {
+    async leave(
+        conn: FN.Pusher.PusherWS.PusherConnection,
+        channel: string,
+    ): Promise<FN.Pusher.Channels.LeaveResponse> {
         let response = await super.leave(conn, channel);
 
         return {

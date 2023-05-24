@@ -21,6 +21,7 @@ export declare namespace WS {
         id: ConnectionID;
         connection: WebSocket;
         closed: boolean;
+        send(message: (ArrayBuffer|ArrayBufferView)|string): Promise<void>;
         sendJson(message: Message): Promise<void>;
         sendError(message: Message, code?: number, reason?: string): Promise<void>;
         close(code?: number, reason?: string): Promise<void>;
@@ -30,6 +31,26 @@ export declare namespace WS {
     type RemoteConnection = {
         id: ConnectionID;
     }
+
+    type Connections = {
+        readonly connections: Map<string, Connection>;
+        newConnection(conn: Connection): Promise<void>;
+        removeConnection(conn: Connection): Promise<void>;
+    }
+}
+
+export declare namespace Webhooks {
+    type WebhookPayload = JSON.Object;
+}
+
+export declare namespace Queue {
+    type Job = {
+        id: string;
+        queue: string;
+        data: JobData;
+    }
+
+    type JobData = JSON.Object;
 }
 
 export declare namespace Pusher {
@@ -75,9 +96,36 @@ export declare namespace Pusher {
             data?: PusherMessageData;
         }
 
-        type Connections = {
+        type SentPusherMessage = {
+            event?: string;
+            channel?: string;
+            data?: PusherMessageData|string;
+        }
+
+        type PusherConnections = WS.Connections & {
+            readonly started: Date;
+            readonly channels: Map<string, Set<string>>;
+
             addToChannel(conn: PusherConnection, channel: string): Promise<number>;
             removeFromChannel(conn: PusherConnection, channel: string|string[]): Promise<number|void>;
+
+            subscribeToChannel(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
+            unsubscribeFromAllChannels(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
+            unsubscribeFromChannel(conn: PusherConnection, channel: string): Promise<void>;
+            handleClientEvent(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
+            removeConnectionFromAllChannels(conn: PusherWS.PusherConnection): Promise<void>;
+
+            getConnections(forceLocal?: boolean): Promise<Map<string, PusherWS.PusherConnection|PusherRemoteConnection>>;
+            isInChannel(connId: string, channel: string, forceLocal?: boolean): Promise<boolean>;
+            getConnectionsCount(forceLocal?: boolean): Promise<number>;
+            getChannels(forceLocal?: boolean): Promise<Map<string, Set<string>>>;
+            getChannelsWithConnectionsCount(forceLocal?: boolean): Promise<Map<string, number>>;
+            getChannelConnections(channel: string, forceLocal?: boolean): Promise<Map<string, PusherWS.PusherConnection|PusherRemoteConnection>>;
+            getChannelConnectionsCount(channel: string, forceLocal?: boolean): Promise<number>;
+            getChannelConnectionsCount(channel: string, forceLocal?: boolean): Promise<number>;
+            getChannelMembers(channel: string, forceLocal?: boolean): Promise<Map<string, Presence.PresenceMemberInfo>>;
+            getChannelMembersCount(channel: string, forceLocal?: boolean): Promise<number>;
+            send(channel: string, data: SentPusherMessage, exceptingId: string|null, forceLocal?: boolean): Promise<void>;
         }
     }
 
@@ -169,11 +217,59 @@ export declare namespace Pusher {
             hasMemberAddedWebhooks?: boolean;
             hasMemberRemovedWebhooks?: boolean;
             hasCacheMissedWebhooks?: boolean;
-
             toObject(): AppScheme;
-            signingTokenFromRequest(request: Request, env: Pusher.PusherEnvironment): Promise<string>;
+            calculateBodyMd5(body: string): Promise<string>;
             createToken(params: string): Promise<string>;
             sha256(): Promise<string>;
         } & AppScheme;
+    }
+
+    namespace PusherGossip {
+        type GossipResponse = {
+            channels?: [string, string[]][];
+            shards?: string[];
+            channelsWithSocketsCount?: [string, number][];
+            connections?: PusherWS.PusherRemoteConnection[];
+            exists?: boolean;
+            totalCount?: number;
+            members?: [string, PusherWS.Presence.PresenceMemberInfo][];
+        }
+
+        type GossipDataOptions = {
+            channel?: string;
+            connId?: string;
+            sentPusherMessage?: string;
+            exceptingId?: string|null;
+            amount?: number;
+        }
+
+        type GossipData = {
+            methodToCall: string;
+            options?: GossipDataOptions;
+        }
+    }
+
+    namespace PusherWebhooks {
+        type ClientEventData = {
+            name: string;
+            channel: string;
+            event?: string,
+            data?: {
+                [key: string]: any;
+            };
+            socket_id?: string;
+            user_id?: string;
+            time_ms?: number;
+        }
+
+        type ClientEventQueueMessage = {
+            appKey: string;
+            appId: string;
+            payload: {
+                time_ms: number;
+                events: ClientEventData[];
+            },
+            originalPusherSignature: string;
+        }
     }
 }
