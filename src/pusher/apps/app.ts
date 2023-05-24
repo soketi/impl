@@ -1,6 +1,6 @@
 import type * as FN from '@soketi/impl';
 
-export abstract class App implements FN.Pusher.PusherApps.App {
+export class App implements FN.Pusher.PusherApps.App {
     id: string;
     key: string;
     secret: string;
@@ -103,43 +103,43 @@ export abstract class App implements FN.Pusher.PusherApps.App {
             ],
         },
         maxPresenceMembersPerChannel: {
-            default: (env: FN.Pusher.PusherEnvironment) => env.PRESENCE_MAX_MEMBERS || 100,
+            default: (env?: FN.Pusher.PusherEnvironment) => env?.PRESENCE_MAX_MEMBERS || 100,
             paramters: ['maxPresenceMembersPerChannel'],
             parsers: [parseInt],
         },
         maxPresenceMemberSizeInKb: {
-            default: (env: FN.Pusher.PusherEnvironment) => env.PRESENCE_MAX_MEMBER_SIZE || 2,
+            default: (env?: FN.Pusher.PusherEnvironment) => env?.PRESENCE_MAX_MEMBER_SIZE || 2,
             paramters: ['maxPresenceMemberSizeInKb'],
             parsers: [parseFloat],
         },
         maxChannelNameLength: {
-            default: (env: FN.Pusher.PusherEnvironment) => env.CHANNEL_LIMITS_MAX_NAME_LENGTH || 200,
+            default: (env?: FN.Pusher.PusherEnvironment) => env?.CHANNEL_LIMITS_MAX_NAME_LENGTH || 200,
             paramters: ['maxChannelNameLength'],
             parsers: [parseInt],
         },
         maxEventChannelsAtOnce: {
-            default: (env: FN.Pusher.PusherEnvironment) => env.EVENT_MAX_CHANNELS_AT_ONCE || 100,
+            default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_CHANNELS_AT_ONCE || 100,
             paramters: ['maxEventChannelsAtOnce'],
             parsers: [parseInt],
         },
         maxEventNameLength: {
-            default: (env: FN.Pusher.PusherEnvironment) => env.EVENT_MAX_NAME_LENGTH || 200,
+            default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_NAME_LENGTH || 200,
             paramters: ['maxEventNameLength'],
             parsers: [parseInt],
         },
         maxEventPayloadInKb: {
-            default: (env: FN.Pusher.PusherEnvironment) => env.EVENT_MAX_SIZE_IN_KB || 100,
+            default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_SIZE_IN_KB || 100,
             paramters: ['maxEventPayloadInKb'],
             parsers: [parseFloat],
         },
         maxEventBatchSize: {
-            default: (env: FN.Pusher.PusherEnvironment) => env.EVENT_MAX_BATCH_SIZE || 10,
+            default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_BATCH_SIZE || 10,
             paramters: ['maxEventBatchSize'],
             parsers: [parseInt],
         },
     };
 
-    constructor(app: FN.Pusher.PusherApps.AppScheme = {}, protected env: FN.Pusher.PusherEnvironment) {
+    constructor(app: FN.Pusher.PusherApps.AppScheme = {}, protected env?: FN.Pusher.PusherEnvironment) {
         this.loadVariablesFromObject(app, env);
 
         this.hasClientEventWebhooks = this.webhooks.filter(webhook => webhook.event_types.includes(App.CLIENT_EVENT_WEBHOOK)).length > 0;
@@ -150,7 +150,7 @@ export abstract class App implements FN.Pusher.PusherApps.App {
         this.hasCacheMissedWebhooks = this.webhooks.filter(webhook => webhook.event_types.includes(App.CACHE_MISSED_WEBHOOK)).length > 0;
     }
 
-    protected loadVariablesFromObject(object: FN.Pusher.PusherApps.AppScheme, env: FN.Pusher.PusherEnvironment): void {
+    protected loadVariablesFromObject(object: FN.Pusher.PusherApps.AppScheme, env?: FN.Pusher.PusherEnvironment): void {
         for (let key in App.schema) {
             let def = App.schema[key];
 

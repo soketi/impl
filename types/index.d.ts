@@ -19,7 +19,7 @@ export declare namespace WS {
 
     type Connection = {
         id: ConnectionID;
-        connection: WebSocket;
+        connection: SoketiNativeWebsocket;
         closed: boolean;
         send(message: (ArrayBuffer|ArrayBufferView)|string): Promise<void>;
         sendJson(message: Message): Promise<void>;
@@ -36,6 +36,11 @@ export declare namespace WS {
         readonly connections: Map<string, Connection>;
         newConnection(conn: Connection): Promise<void>;
         removeConnection(conn: Connection): Promise<void>;
+    }
+
+    type SoketiNativeWebsocket = {
+        send(message: (ArrayBuffer | ArrayBufferView) | string): void;
+        close(code?: number, reason?: string): void;
     }
 }
 

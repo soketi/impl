@@ -1,3 +1,5 @@
+import type * as FN from '@soketi/impl';
+
 export class Router {
     static protocols = new Map<string, { handler: Function; }>();
 
@@ -10,35 +12,35 @@ export class Router {
         this.protocols.set(protocol, { handler });
     }
 
-    static onNewConnection(cb: (connection: any) => any): void {
+    static onNewConnection(cb: (connection: FN.WS.Connection) => any): void {
         this.registerHandler(this.ON_NEW_CONNECTION, cb);
     }
 
-    static onConnectionClosed(cb: (connection: any) => any): void {
+    static onConnectionClosed(cb: (connection: FN.WS.Connection) => any): void {
         this.registerHandler(this.ON_CONNECTION_CLOSED, cb);
     }
 
-    static onMessage(cb: (connection: any, message: any) => any): void {
+    static onMessage(cb: (connection: FN.WS.Connection, message: any) => any): void {
         this.registerHandler(this.ON_MESSAGE, cb);
     }
 
-    static onError(cb: (connection: any, error: any) => any): void {
+    static onError(cb: (connection: FN.WS.Connection, error: any) => any): void {
         this.registerHandler(this.ON_ERROR, cb);
     }
 
-    static async handleNewConnection(connection: any): Promise<void> {
+    static async handleNewConnection(connection: FN.WS.Connection): Promise<void> {
         await this.getProtocol(this.ON_NEW_CONNECTION).handler(connection);
     }
 
-    static async handleConnectionClosed(connection: any): Promise<void> {
-        await this.getProtocol(this.ON_CONNECTION_CLOSED).handler(connection);
+    static async handleConnectionClosed(connection: FN.WS.Connection, code?: number, message?: any): Promise<void> {
+        await this.getProtocol(this.ON_CONNECTION_CLOSED).handler(connection, code, message);
     }
 
-    static async handleMessage(connection: any, message: any): Promise<void> {
+    static async handleMessage(connection: FN.WS.Connection, message: any): Promise<void> {
         await this.getProtocol(this.ON_MESSAGE).handler(connection, message);
     }
 
-    static async handleError(connection: any, error: any): Promise<void> {
+    static async handleError(connection: FN.WS.Connection, error: any): Promise<void> {
         await this.getProtocol(this.ON_ERROR).handler(connection, error);
     }
 

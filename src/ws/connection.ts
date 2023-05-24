@@ -1,11 +1,11 @@
 import type * as FN from '@soketi/impl';
 
-export class Connection {
+export class Connection implements FN.WS.Connection {
     closed = false;
 
     constructor(
         public id: FN.WS.ConnectionID,
-        public connection: WebSocket,
+        public connection: FN.WS.SoketiNativeWebsocket,
     ) {
         //
     }
