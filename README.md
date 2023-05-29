@@ -1,4 +1,18 @@
+> The 🇷🇺 Russian invasion of 🇺🇦 Ukraine breaches any law, including the UN Charter. [#StandWithUkraine](https://github.com/vshymanskyy/StandWithUkraine)
+
+> Open-source is not about political views, but rather humanitar views. It's code by the people for the people. Unprovoked, unjustifiable and despicable action that is killing civilians is not tolerated. The [Renoki Co.](https://github.com/renoki-co) subsidiaries (including Soketi) has taken action to move away from Russian software and dependencies and block any access from Russia within their projects.
+
 # Soketi Implementation
+
+[![CI](https://github.com/soketi/impl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/soketi/impl/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/soketi/impl/branch/master/graph/badge.svg)](https://codecov.io/gh/soketi/impl/branch/master)
+[![Latest Stable Version](https://img.shields.io/github/v/release/soketi/impl)](https://www.npmjs.com/package/@soketi/impl)
+[![Total Downloads](https://img.shields.io/npm/dt/@soketi/impl)](https://www.npmjs.com/package/@soketi/impl)
+[![License](https://img.shields.io/npm/l/@soketi/impl)](https://www.npmjs.com/package/@soketi/impl)
+
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/soketi)](https://artifacthub.io/packages/search?repo=soketi)
+[![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)
+[![Discord](https://img.shields.io/discord/957380329985958038?color=%235865F2&label=Discord&logo=discord&logoColor=%23fff)](https://discord.gg/VgfKCQydjb)
 
 Soketi Implementation is a TypeScript boilerplate to use on your WebSocket implementations. This represents a customizable single point of entry for your server, no matter what framework you are using.
 
@@ -15,7 +29,7 @@ In the examples, we will assume a pseudo-WebSocket server (not tied to any real 
 This implementation provides a tracking of connections for the server:
 
 ```js
-import { Connections, Connection } from '@soketi/soketi-impl';
+import { Connections, Connection } from '@soketi/impl';
 
 const conns = new Connections();
 
@@ -62,8 +76,8 @@ so that you don't have to implement them yourself. You will be defining both
 the handlers, as well as the calls to them, in a static way.
 
 ```js
-import { Router as WsRouter } from '@soketi/soketi-impl';
-import { Connections, Connection } from '@soketi/soketi-impl';
+import { Router as WsRouter } from '@soketi/impl';
+import { Connections, Connection } from '@soketi/impl';
 
 const conns = new Connections();
 
@@ -92,7 +106,7 @@ The router provides handlers for the following events:
 You can also register your own handlers:
 
 ```js
-import { Router as WsRouter } from '@soketi/soketi-impl';
+import { Router as WsRouter } from '@soketi/impl';
 
 // Register a ping handler.
 WsRouter.registerHandler('onPing', async conn => {
