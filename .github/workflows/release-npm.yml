@@ -1,0 +1,60 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+
+    runs-on: ubuntu-latest
+
+    name: Publish to NPM
+
+    steps:
+      - uses: actions/checkout@v3.0.2
+
+      - uses: actions/setup-node@v3.4.1
+        name: Installing Node.js v18.x
+        with:
+          node-version: 18.x
+
+      - uses: actions/cache@v3.0.7
+        name: Cache Node.js dependencies
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-18.x-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-18.x-node-
+
+      - name: Installing dependencies
+        run: |
+          npm ci
+
+      - name: Execute lint & build
+        run: |
+          npm run lint
+          npm run build
+
+      - name: Cleanup
+        run: |
+          npm prune --production
+          rm -rf node_modules/*/test/ node_modules/*/tests/
+
+      - name: Compute GitHub tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1.1.0
+
+      - name: Publish
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          npm set //registry.npmjs.org/:_authToken $NPM_TOKEN
+          npm version ${{ steps.tag.outputs.tag }}
+          npm publish --access=public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
