@@ -1,13 +1,16 @@
 import * as FN from '@soketi/impl';
-import { Connections as BaseConnections } from '@/ws/connections';
-import { EncryptedPrivateChannelManager, PresenceChannelManager, PrivateChannelManager, PublicChannelManager } from '@pusher/channels';
-import { Utils } from '@pusher/utils';
+import { Connections as BaseConnections } from '../../ws';
+import { EncryptedPrivateChannelManager, PresenceChannelManager, PrivateChannelManager, PublicChannelManager } from '../channels';
+import { PusherConnection, Utils } from '../';
+import { Gossiper } from '../../gossiper';
 
-export class Connections extends BaseConnections implements FN.Pusher.PusherWS.PusherConnections {
+export class PusherConnections extends BaseConnections implements FN.Pusher.PusherWS.PusherConnections {
     readonly started: Date;
     readonly channels: Map<string, Set<string>> = new Map;
-
-    constructor(protected app: FN.Pusher.PusherApps.App) {
+    constructor(
+        protected app: FN.Pusher.PusherApps.App,
+        protected readonly gossiper: Gossiper,
+    ) {
         super();
 
         this.started = new Date;
@@ -24,7 +27,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
         return await this.getChannelConnectionsCount(channel);
     }
 
-    async removeFromChannel(conn: FN.Pusher.PusherWS.PusherConnection, channel: string|string[]): Promise<number|void> {
+    async removeFromChannels(conn: FN.Pusher.PusherWS.PusherConnection, channel: string|string[]): Promise<number|void> {
         let remove = (channel: string) => {
             this.channels.get(channel)?.delete(conn.id);
 
@@ -49,7 +52,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
     }
 
     async removeConnectionFromAllChannels(conn: FN.Pusher.PusherWS.PusherConnection): Promise<void> {
-        this.removeFromChannel(conn, [...this.channels.keys()]);
+        this.removeFromChannels(conn, [...this.channels.keys()]);
     }
 
     async subscribeToChannel(conn: FN.Pusher.PusherWS.PusherConnection, message: FN.Pusher.PusherWS.PusherMessage): Promise<any> {
@@ -139,7 +142,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
             members.set(user_id as string, user_info);
 
-            this.webhooks.sendMemberAdded(channel, member.user_id as string);
+            // TODO: this.webhooks.sendMemberAdded(channel, member.user_id as string);
         }
 
         await conn.sendJson({
@@ -185,14 +188,14 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
                         data: JSON.stringify({ user_id: member.user_id }),
                     }, conn.id);
 
-                    this.webhooks.sendMemberRemoved(channel, member.user_id as string);
+                    // TODO: this.webhooks.sendMemberRemoved(channel, member.user_id as string);
                 }
             }
 
             conn.subscribedChannels.delete(channel);
 
             if (response.remainingConnections === 0) {
-                this.webhooks.sendChannelVacated(channel);
+                // TODO: this.webhooks.sendChannelVacated(channel);
             }
         }
     }
@@ -257,14 +260,18 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
             ...userId ? { user_id: userId } : {},
         };
 
-        this.send(channel, eventMessage, conn.id);
+        await this.send(channel, eventMessage, conn.id);
 
-        this.webhooks.sendClientEvent(
-            channel, event, data, conn.id, userId
-        );
+        // TODO:
+        // this.webhooks.sendClientEvent(
+        //     channel, event, data, conn.id, userId
+        // );
     }
 
-    async getConnections(forceLocal = false): Promise<Map<string, FN.Pusher.PusherWS.PusherConnection|FN.Pusher.PusherRemoteConnection>> {
+    async getConnections(forceLocal = false): Promise<Map<
+        string,
+        FN.Pusher.PusherWS.PusherConnection|FN.Pusher.PusherWS.PusherRemoteConnection
+    >> {
         if (forceLocal) {
             return Promise.resolve(this.connections as Map<string, FN.Pusher.PusherWS.PusherConnection>);
         }
@@ -503,15 +510,16 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
     }
 
     async sendMissedCacheIfExists(conn: FN.Pusher.PusherWS.PusherConnection, channel: string) {
-        let cachedEvent = await this.env.APPS.get(
+        // TODO: Caching module
+        /* let cachedEvent = await this.env.APPS.get(
             `app_${this.app.id}_channel_${channel}_cache_miss`,
         );
 
         if (cachedEvent) {
             conn.sendJson({ event: 'pusher:cache_miss', channel, data: cachedEvent });
         } else {
-            this.webhooks.sendCacheMissed(channel);
-        }
+            // TODO: this.webhooks.sendCacheMissed(channel);
+        } */
     }
 
     async getChannelManagerFor(channel: string): Promise<FN.Pusher.Channels.ChannelManager> {
@@ -526,10 +534,19 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
         }
     }
 
-    get callMethodAggregators(): { [method: string]: (responses: FN.Gossip.Payload[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => any; } {
+    get callMethodAggregators(): {
+        [method: string]: (
+            responses: FN.Gossip.Response[],
+            options?: FN.Pusher.PusherGossip.GossipDataOptions,
+        ) => any;
+    } {
         return {
-            getConnections: async (gossipResponses: FN.Gossip.Payload[]) => {
-                let localConns: Map<string, FN.Pusher.PusherWS.PusherConnection|FN.Pusher.PusherWS.PusherRemoteConnection> = await this.getConnections(true);
+            getConnections: async (gossipResponses: FN.Gossip.Response[]) => {
+                let localConns: Map<
+                    string,
+                    FN.Pusher.PusherWS.PusherConnection
+                    |FN.Pusher.PusherWS.PusherRemoteConnection
+                > = await this.getConnections(true);
 
                 for await (let response of gossipResponses) {
                     let { connections } = response as FN.Pusher.PusherGossip.GossipResponse;
@@ -541,7 +558,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return localConns;
             },
-            isInChannel: async (gossipResponses: FN.Gossip.Payload[]) => {
+            isInChannel: async (gossipResponses: FN.Gossip.Response[]) => {
                 for await (let response of gossipResponses) {
                     let { exists } = response as FN.Pusher.PusherGossip.GossipResponse;
 
@@ -552,7 +569,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return false;
             },
-            getConnectionsCount: async (gossipResponses: FN.Gossip.Payload[]) => {
+            getConnectionsCount: async (gossipResponses: FN.Gossip.Response[]) => {
                 let localConnectionsCount = await this.getConnectionsCount(true);
 
                 for await (let response of gossipResponses) {
@@ -562,7 +579,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return localConnectionsCount;
             },
-            getChannels: async (gossipResponses: FN.Gossip.Payload[]) => {
+            getChannels: async (gossipResponses: FN.Gossip.Response[]) => {
                 let localChannels = await this.getChannels(true);
 
                 for await (let response of gossipResponses) {
@@ -584,7 +601,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return localChannels;
             },
-            getChannelsWithConnectionsCount: async (gossipResponses: FN.Gossip.Payload[]) => {
+            getChannelsWithConnectionsCount: async (gossipResponses: FN.Gossip.Response[]) => {
                 let localList = await this.getChannelsWithConnectionsCount(true);
 
                 for await (let response of gossipResponses) {
@@ -604,7 +621,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return localList;
             },
-            getChannelConnections: async (gossipResponses: FN.Gossip.Payload[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
+            getChannelConnections: async (gossipResponses: FN.Gossip.Response[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
                 let channelSockets = await this.getChannelConnections(options.channel, true);
 
                 for await (let response of gossipResponses) {
@@ -617,7 +634,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return channelSockets;
             },
-            getChannelConnectionsCount: async (gossipResponses: FN.Gossip.Payload[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
+            getChannelConnectionsCount: async (gossipResponses: FN.Gossip.Response[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
                 let localChannelSocketsCount = await this.getChannelConnectionsCount(options.channel, true);
 
                 for await (let response of gossipResponses) {
@@ -628,7 +645,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return localChannelSocketsCount;
             },
-            getChannelMembers: async (gossipResponses: FN.Gossip.Payload[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
+            getChannelMembers: async (gossipResponses: FN.Gossip.Response[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
                 let localMembers = await this.getChannelMembers(options.channel, true);
 
                 for await (let response of gossipResponses) {
@@ -641,7 +658,7 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return localMembers;
             },
-            getChannelMembersCount: async (gossipResponses: FN.Gossip.Payload[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
+            getChannelMembersCount: async (gossipResponses: FN.Gossip.Response[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
                 let localChannelMembersCount = await this.getChannelMembersCount(options.channel, true);
 
                 for await (let response of gossipResponses) {
@@ -652,9 +669,77 @@ export class Connections extends BaseConnections implements FN.Pusher.PusherWS.P
 
                 return localChannelMembersCount;
             },
-            send: async (gossipResponses: FN.Gossip.Payload[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
+            send: async (gossipResponses: FN.Gossip.Response[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
                 //
             },
         };
+    }
+
+    get callMethodResponses(): { [method: string]: (options: FN.Pusher.PusherGossip.GossipDataOptions) => Promise<FN.Pusher.PusherGossip.GossipResponse> } {
+        return {
+            getConnections: async (options: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                connections: [...(await this.getConnections(true) as Map<string, FN.Pusher.PusherWS.PusherConnection|FN.Pusher.PusherWS.PusherRemoteConnection>).values()].map((conn) => {
+                    return conn instanceof PusherConnection
+                        ? conn.toRemote('pusher')
+                        : conn;
+                }) as FN.Pusher.PusherWS.PusherRemoteConnection[],
+            }),
+            isInChannel: async (options: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                exists: await this.isInChannel(options.connId, options.channel, true),
+            }),
+            getConnectionsCount: async (options: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                totalCount: await this.getChannelConnectionsCount(options.channel, true),
+            }),
+            getChannels: async (options: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                channels: [...await this.getChannels(true)].map(([channel, connections]) => [channel, [...connections]]),
+            }),
+            getChannelsWithConnectionsCount: async (options: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                channelsWithSocketsCount: [...await this.getChannelsWithConnectionsCount(true)],
+            }),
+            getChannelConnections: async ({ channel }: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                connections: [...(await this.getChannelConnections(channel, true)).values()].map((conn) => {
+                    return conn instanceof PusherConnection
+                        ? conn.toRemote('pusher')
+                        : conn;
+                }) as FN.Pusher.PusherWS.PusherRemoteConnection[],
+            }),
+            getChannelConnectionsCount: async ({ channel }: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                totalCount: await this.getChannelConnectionsCount(channel, true),
+            }),
+            getChannelMembers: async ({ channel }: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                members: [...await this.getChannelMembers(channel, true)],
+            }),
+            getChannelMembersCount: async ({ channel }: FN.Pusher.PusherGossip.GossipDataOptions) => ({
+                totalCount: await this.getChannelMembersCount(channel, true),
+            }),
+            send: async ({ channel, sentPusherMessage, exceptingId }: FN.Pusher.PusherGossip.GossipDataOptions) => {
+                await this.send(
+                    channel,
+                    JSON.parse(sentPusherMessage) as FN.Pusher.PusherWS.PusherMessage,
+                    exceptingId,
+                    true,
+                );
+
+                return {
+                    //
+                };
+            },
+        }
+    }
+
+    async callOthers(data: {
+        topic: string;
+        data: FN.Gossip.Payload;
+    }): Promise<FN.Gossip.Response[]> {
+        return this.gossiper.sendRequestToPeers(
+            data.topic,
+            await this.getPeers(),
+            data.data,
+        );
+    }
+
+    async getPeers(): Promise<string[]> {
+        // TODO: Horizontal manager
+        return [];
     }
 }

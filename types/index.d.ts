@@ -1,16 +1,13 @@
 export declare namespace JSON {
-    type Value = Date|RegExp|string|number|boolean|null|JSON.Object;
-    type Object = JSON.Value[]|{ [key: string]: JSON.Value };
+    type Value = Date|RegExp|string|number|boolean|null|JSON.Object|any;
+    type Object = JSON.Value[]|{ [key: string]: JSON.Value; };
 }
 
 export namespace Gossip {
-    type Payload = JSON.Object|JSON.Value;
-    type ResponseHandler = (msg: Gossip.Message) => Promise<Gossip.Payload>;
+    type Response = JSON.Object|JSON.Value;
+    type ResponseHandler = (msg: Gossip.Payload) => Promise<Gossip.Response>;
     type ResponseHandlers = { [topic: string]: ResponseHandler; };
-    type Message = {
-        topic: string;
-        data: JSON.Value;
-    }
+    type Payload = JSON.Object;
 }
 
 export declare namespace WS {
@@ -25,7 +22,7 @@ export declare namespace WS {
         sendJson(message: Message): Promise<void>;
         sendError(message: Message, code?: number, reason?: string): Promise<void>;
         close(code?: number, reason?: string): Promise<void>;
-        toRemote(shard: string): RemoteConnection;
+        toRemote(remoteInstanceId?: string): RemoteConnection;
     }
 
     type RemoteConnection = {
@@ -112,7 +109,7 @@ export declare namespace Pusher {
             readonly channels: Map<string, Set<string>>;
 
             addToChannel(conn: PusherConnection, channel: string): Promise<number>;
-            removeFromChannel(conn: PusherConnection, channel: string|string[]): Promise<number|void>;
+            removeFromChannels(conn: PusherConnection, channel: string|string[]): Promise<number|void>;
 
             subscribeToChannel(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
             unsubscribeFromAllChannels(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
@@ -232,7 +229,7 @@ export declare namespace Pusher {
     namespace PusherGossip {
         type GossipResponse = {
             channels?: [string, string[]][];
-            shards?: string[];
+            remoteInstanceIds?: string[];
             channelsWithSocketsCount?: [string, number][];
             connections?: PusherWS.PusherRemoteConnection[];
             exists?: boolean;

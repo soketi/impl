@@ -1,6 +1,6 @@
 import type * as FN from '@soketi/impl';
 import { PrivateChannelManager } from './private-channel-manager';
-import { Utils } from '@/pusher/utils';
+import { Utils } from '../';
 
 export class PresenceChannelManager extends PrivateChannelManager implements FN.Pusher.Channels.PresenceChannelManager {
     async join(

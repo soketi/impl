@@ -1,10 +1,20 @@
 import * as FN from '@soketi/impl';
-import { Connection as BaseConnection } from '@ws/connection';
+import { Connection as BaseConnection } from '../../ws';
 
-export class Connection extends BaseConnection implements FN.Pusher.PusherWS.PusherConnection {
+export class PusherConnection extends BaseConnection implements FN.Pusher.PusherWS.PusherConnection {
     subscribedChannels: Set<string>;
     presence: Map<string, FN.Pusher.PusherWS.Presence.PresenceMember>;
     timeout: any;
+
+    constructor(
+        public id: FN.WS.ConnectionID,
+        public connection: FN.WS.SoketiNativeWebsocket,
+    ) {
+        super(id, connection);
+
+        this.subscribedChannels = new Set();
+        this.presence = new Map();
+    }
 
     async handlePong(): Promise<void> {
         this.sendJson({
@@ -48,9 +58,9 @@ export class Connection extends BaseConnection implements FN.Pusher.PusherWS.Pus
         }, 500);
     }
 
-    toRemote(shard: string): FN.Pusher.PusherWS.PusherRemoteConnection {
+    toRemote(remoteInstanceId?: string): FN.Pusher.PusherWS.PusherRemoteConnection {
         return {
-            ...super.toRemote(shard),
+            ...super.toRemote(remoteInstanceId),
             subscribedChannels: [...this.subscribedChannels],
             presence: [...this.presence].map(([channel, member]) => ({ channel, member })),
         };

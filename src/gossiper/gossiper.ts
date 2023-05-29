@@ -1,18 +1,41 @@
 import type * as FN from '@soketi/impl';
 
 export abstract class Gossiper {
-    static protocols = new Map();
+    protocols = new Map<string, { responseResolver: FN.Gossip.ResponseHandler; }>();
 
-    static registerProtocol(
-        protocol: string,
-        responseHandler: Function,
-        metadata?: FN.JSON.Object,
-    ) {
-        this.protocols.set(protocol, {
-            responseHandler: responseHandler.bind(this),
-            metadata,
-        });
+    constructor(data: {
+        protocol: string;
+        responseResolver: FN.Gossip.ResponseHandler;
+    }[] = []) {
+        for (const protocol of data) {
+            this.registerProtocol(protocol);
+        }
     }
 
-    abstract sendRequestToPeers(protocol: string, peers: string[], metadata?: FN.JSON.Object): Promise<any[]>;
+    registerProtocol(data: {
+        protocol: string;
+        responseResolver: FN.Gossip.ResponseHandler;
+    }): void {
+        if (!this.protocols.has(data.protocol)) {
+            this.protocols.set(data.protocol, {
+                responseResolver: data.responseResolver.bind(this),
+            });
+        }
+    }
+
+    async resolveResponse(protocol: string, msg: FN.JSON.Object): Promise<FN.Gossip.Response> {
+        const handler = this.protocols.get(protocol);
+
+        if (handler) {
+            return handler.responseResolver(msg);
+        }
+
+        throw new Error(`Unknown protocol: ${protocol}`);
+    }
+
+    abstract sendRequestToPeers(
+        protocol: string,
+        peers: string[],
+        message: FN.Gossip.Payload,
+    ): Promise<FN.Gossip.Response[]>;
 }

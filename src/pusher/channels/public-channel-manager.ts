@@ -19,7 +19,7 @@ export class PublicChannelManager implements FN.Pusher.Channels.PublicChannelMan
     }
 
     async leave(conn: FN.Pusher.PusherWS.PusherConnection, channel: string): Promise<FN.Pusher.Channels.LeaveResponse> {
-        let remainingConnections = await this.connections.removeFromChannel(conn, channel) as number;
+        let remainingConnections = await this.connections.removeFromChannels(conn, channel) as number;
 
         return {
             left: true,

@@ -1,6 +1,6 @@
 import type * as FN from '@soketi/impl';
 
-export class App implements FN.Pusher.PusherApps.App {
+export abstract class App implements FN.Pusher.PusherApps.App {
     id: string;
     key: string;
     secret: string;
@@ -211,18 +211,6 @@ export class App implements FN.Pusher.PusherApps.App {
         }
 
         return await this.createToken([method, path, App.toOrderedArray(params).join('&')].join("\n"));
-    }
-
-    protected extractFromPassedKeys(app: FN.JSON.Object, parameters: string[], defaultValue: any): any {
-        let extractedValue = defaultValue;
-
-        for (let param of parameters) {
-            if (typeof app[param] !== 'undefined') {
-                extractedValue = app[param];
-            }
-        }
-
-        return extractedValue;
     }
 
     protected transformPotentialJsonToArray(potentialJson: any): any {

@@ -16,7 +16,7 @@ export class Router {
         this.registerHandler(this.ON_NEW_CONNECTION, cb);
     }
 
-    static onConnectionClosed(cb: (connection: FN.WS.Connection) => any): void {
+    static onConnectionClosed(cb: (connection: FN.WS.Connection, code?: number, message?: any) => any): void {
         this.registerHandler(this.ON_CONNECTION_CLOSED, cb);
     }
 

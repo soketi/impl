@@ -7,13 +7,14 @@ export default defineConfig({
 		includeSource: [
             'src/**/*.ts',
         ],
-		testTimeout: 10_000,
+		testTimeout: 5_000,
         maxConcurrency: 1,
         clearMocks: true,
         watch: false,
         coverage: {
             provider: 'c8',
             reporter: ['text', 'json', 'html', 'clover'],
+            all: true,
         },
         singleThread: true,
         isolate: true,

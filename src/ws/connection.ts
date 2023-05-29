@@ -32,7 +32,7 @@ export class Connection implements FN.WS.Connection {
         this.connection.close(code, reason);
     }
 
-    toRemote(shard: string): FN.WS.RemoteConnection {
+    toRemote(remoteInstanceId?: string): FN.WS.RemoteConnection {
         return {
             id: this.id,
         };

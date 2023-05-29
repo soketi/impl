@@ -1,3 +1,4 @@
+import type * as FN from '@soketi/impl';
 import { App } from './app';
 import { AppsManager } from './apps-manager';
 
@@ -29,5 +30,9 @@ export class AppsRegistry {
 
     static async getByKey(key: string): Promise<App|null> {
         return await this.getDriver().getByKey(key);
+    }
+
+    static async initializeApp(scheme: FN.Pusher.PusherApps.AppScheme): Promise<FN.Pusher.PusherApps.App> {
+        return await this.getDriver().initializeApp(scheme);
     }
 }
