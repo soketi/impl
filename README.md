@@ -4,14 +4,14 @@
 
 # Soketi Implementation
 
-[![CI](https://github.com/soketi/impl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/soketi/impl/actions/workflows/ci.yml)
+[![CI](https://github.com/soketi/impl/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/soketi/impl/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/soketi/impl/branch/master/graph/badge.svg)](https://codecov.io/gh/soketi/impl/branch/master)
 [![Latest Stable Version](https://img.shields.io/github/v/release/soketi/impl)](https://www.npmjs.com/package/@soketi/impl)
 [![Total Downloads](https://img.shields.io/npm/dt/@soketi/impl)](https://www.npmjs.com/package/@soketi/impl)
 [![License](https://img.shields.io/npm/l/@soketi/impl)](https://www.npmjs.com/package/@soketi/impl)
 
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/soketi)](https://artifacthub.io/packages/search?repo=soketi)
-[![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)
+[![StandWithUkraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/master/badges/StandWithUkraine.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/master/docs/README.md)
 [![Discord](https://img.shields.io/discord/957380329985958038?color=%235865F2&label=Discord&logo=discord&logoColor=%23fff)](https://discord.gg/VgfKCQydjb)
 
 Soketi Implementation is a TypeScript boilerplate to use on your WebSocket implementations. This represents a customizable single point of entry for your server, no matter what framework you are using.
