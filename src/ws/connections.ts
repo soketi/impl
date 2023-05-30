@@ -1,4 +1,4 @@
-import * as FN from '@soketi/impl';
+import type * as FN from '@soketi/impl/types';
 
 export abstract class Connections implements FN.WS.Connections {
     readonly connections: Map<string, FN.WS.Connection> = new Map();

@@ -10,6 +10,8 @@
   "compilerOptions": {
     "module": "CommonJS",
     "target": "ES2020",
+    "removeComments": true,
+    "declaration": true,
     "lib": [
       "ES2020"
     ],
@@ -21,8 +23,10 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
+      "@soketi/impl/types": [
+        "./types/index.d.ts"
+      ],
       "@soketi/impl": [
-        "./types/index.d.ts",
         "./src"
       ],
       "@soketi/impl/*": [

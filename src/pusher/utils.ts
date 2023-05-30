@@ -1,5 +1,3 @@
-import type * as FN from '@soketi/impl';
-
 export class Utils {
     protected static clientEventPatterns: string[] = [
         'client-*',

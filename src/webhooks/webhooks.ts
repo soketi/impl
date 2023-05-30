@@ -1,4 +1,4 @@
-import type * as FN from '@soketi/impl';
+import type * as FN from '@soketi/impl/types';
 
 export class Webhook {
     batch: FN.Webhooks.WebhookPayload[] = [];

@@ -1,4 +1,4 @@
-import type * as FN from '@soketi/impl';
+import type * as FN from '@soketi/impl/types';
 import { PublicChannelManager } from './public-channel-manager';
 
 export class PrivateChannelManager extends PublicChannelManager implements FN.Pusher.Channels.PrivateChannelManager {

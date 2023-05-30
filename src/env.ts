@@ -1,4 +1,4 @@
-import * as FN from '@soketi/impl';
+import type * as FN from '@soketi/impl/types';
 
 export class Env {
     static env: FN.JSON.Object = {};

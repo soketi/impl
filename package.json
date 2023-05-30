@@ -1,8 +1,7 @@
 {
   "name": "@soketi/impl",
   "version": "0.0.0",
-  "types": "types/index.d.ts",
-  "type": "module",
+  "types": "dist/index.d.ts",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
@@ -32,12 +31,10 @@
     "pusher-js": "^8.0.0"
   },
   "files": [
-    "types/index.d.ts",
-    "src"
+    "./types/index.d.ts"
   ],
   "exports": {
-    ".": "./src/index.ts",
-    "./types": "./types/index.d.ts",
-    "./src": "./src/index.ts"
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
   }
 }

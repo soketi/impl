@@ -1,4 +1,4 @@
-import * as FN from '@soketi/impl';
+import type * as FN from '@soketi/impl/types';
 import { Connections as BaseConnections } from '../../ws';
 import { EncryptedPrivateChannelManager, PresenceChannelManager, PrivateChannelManager, PublicChannelManager } from '../channels';
 import { PusherConnection, Utils } from '../';
@@ -25,34 +25,6 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
         this.channels.get(channel).add(conn.id);
 
         return await this.getChannelConnectionsCount(channel);
-    }
-
-    async removeFromChannels(conn: FN.Pusher.PusherWS.PusherConnection, channel: string|string[]): Promise<number|void> {
-        let remove = (channel: string) => {
-            this.channels.get(channel)?.delete(conn.id);
-
-            if (this.channels?.get(channel).size === 0) {
-                this.channels.delete(channel);
-            }
-
-            conn.subscribedChannels.delete(channel);
-        };
-
-        if (Array.isArray(channel)) {
-            for await (let ch of channel) {
-                remove(ch);
-            }
-
-            return;
-        }
-
-        remove(channel);
-
-        return await this.getChannelConnectionsCount(channel);
-    }
-
-    async removeConnectionFromAllChannels(conn: FN.Pusher.PusherWS.PusherConnection): Promise<void> {
-        this.removeFromChannels(conn, [...this.channels.keys()]);
     }
 
     async subscribeToChannel(conn: FN.Pusher.PusherWS.PusherConnection, message: FN.Pusher.PusherWS.PusherMessage): Promise<any> {
@@ -198,6 +170,36 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
                 // TODO: this.webhooks.sendChannelVacated(channel);
             }
         }
+
+        await this.removeFromChannels(conn, channel);
+    }
+
+    async removeFromChannels(conn: FN.Pusher.PusherWS.PusherConnection, channel: string|string[]): Promise<number|void> {
+        let remove = (channel: string) => {
+            this.channels.get(channel)?.delete(conn.id);
+
+            if (this.channels?.get(channel).size === 0) {
+                this.channels.delete(channel);
+            }
+
+            conn.subscribedChannels.delete(channel);
+        };
+
+        if (Array.isArray(channel)) {
+            for await (let ch of channel) {
+                remove(ch);
+            }
+
+            return;
+        }
+
+        remove(channel);
+
+        return await this.getChannelConnectionsCount(channel);
+    }
+
+    async removeConnectionFromAllChannels(conn: FN.Pusher.PusherWS.PusherConnection): Promise<void> {
+        await this.removeFromChannels(conn, [...this.channels.keys()]);
     }
 
     async handleClientEvent(conn: FN.Pusher.PusherWS.PusherConnection, message: FN.Pusher.PusherWS.PusherMessage): Promise<any> {

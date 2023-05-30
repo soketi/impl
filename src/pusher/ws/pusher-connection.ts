@@ -1,4 +1,4 @@
-import * as FN from '@soketi/impl';
+import type * as FN from '@soketi/impl/types';
 import { Connection as BaseConnection } from '../../ws';
 
 export class PusherConnection extends BaseConnection implements FN.Pusher.PusherWS.PusherConnection {

@@ -1,4 +1,4 @@
-import type * as FN from '@soketi/impl';
+import type * as FN from '@soketi/impl/types';
 import { PrivateChannelManager } from './private-channel-manager';
 import { Utils } from '../';
 
