@@ -74,8 +74,7 @@ describe('pusher/channels/private-encrypted', () => {
         const conns = new LocalConnections(app, gossiper);
 
         WsRouter.onConnectionClosed(async (conn) => {
-            await conns.removeConnectionFromAllChannels(conn);
-            await conns.removeConnection(conn);
+            await conns.unsubscribeFromAllChannels(conn);
         });
 
         const conn = new PusherConnection('test', {

@@ -135,7 +135,7 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
     }
 
     async unsubscribeFromAllChannels(conn: FN.Pusher.PusherWS.PusherConnection): Promise<void> {
-        await Promise.all(
+        await Promise.allSettled(
             [...conn.subscribedChannels].map(channel => this.unsubscribeFromChannel(conn, channel))
         );
     }
@@ -196,10 +196,6 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
         remove(channel);
 
         return await this.getChannelConnectionsCount(channel);
-    }
-
-    async removeConnectionFromAllChannels(conn: FN.Pusher.PusherWS.PusherConnection): Promise<void> {
-        await this.removeFromChannels(conn, [...this.channels.keys()]);
     }
 
     async handleClientEvent(conn: FN.Pusher.PusherWS.PusherConnection, message: FN.Pusher.PusherWS.PusherMessage): Promise<any> {

@@ -115,7 +115,6 @@ export declare namespace Pusher {
             unsubscribeFromAllChannels(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
             unsubscribeFromChannel(conn: PusherConnection, channel: string): Promise<void>;
             handleClientEvent(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
-            removeConnectionFromAllChannels(conn: PusherWS.PusherConnection): Promise<void>;
 
             getConnections(forceLocal?: boolean): Promise<Map<string, PusherWS.PusherConnection|PusherRemoteConnection>>;
             isInChannel(connId: string, channel: string, forceLocal?: boolean): Promise<boolean>;

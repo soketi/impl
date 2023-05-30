@@ -69,7 +69,8 @@ describe('pusher/channels/public', () => {
         const conns = new LocalConnections(app, gossiper);
 
         WsRouter.onConnectionClosed(async (conn) => {
-            await conns.removeConnectionFromAllChannels(conn);
+            await conns.unsubscribeFromAllChannels(conn);
+            await conns.removeConnection(conn);
         });
 
         const conn = new PusherConnection('test', {
