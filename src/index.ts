@@ -1,4 +1,4 @@
-export * from './gossiper';
-export * from './pusher';
-export * from './webhooks';
-export * from './ws';
+export * as Gossiper from './gossiper';
+export * as Pusher from './pusher';
+export * as Webhooks from './webhooks';
+export * as WS from './ws';

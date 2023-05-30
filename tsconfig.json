@@ -1,34 +1,33 @@
-// The output files in the dist folder are using "@/*" instead of the resolved imports.
 {
-    "include": [
-        "./types/**/*.ts",
-        "./src/**/*.ts"
+  "include": [
+    "./types/**/*.ts",
+    "./src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2020",
+    "lib": [
+      "ES2020"
     ],
-    "exclude": [
-        "node_modules",
-        "dist"
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "typeRoots": [
+      "node_modules/@types",
     ],
-    "compilerOptions": {
-        "module": "CommonJS",
-        "target": "ES2020",
-        "lib": ["ES2020"],
-        "esModuleInterop": true,
-        "moduleResolution": "node",
-        "typeRoots": [
-            "node_modules/@types",
-        ],
-        "outDir": "./dist",
-        "rootDir": "./src",
-        "paths": {
-            "@soketi/impl": ["./types/index.d.ts"],
-            "@": ["./src"],
-            "@/*": ["./src/*"],
-            "@gossiper": ["./src/gossiper"],
-            "@gossiper/*": ["./src/gossiper/*"],
-            "@pusher": ["./src/pusher"],
-            "@pusher/*": ["./src/pusher/*"],
-            "@ws": ["./src/ws"],
-            "@ws/*": ["./src/ws/*"]
-        },
-    }
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@soketi/impl": [
+        "./types/index.d.ts",
+        "./src"
+      ],
+      "@soketi/impl/*": [
+        "./src/*"
+      ],
+    },
+  }
 }
