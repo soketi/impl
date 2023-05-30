@@ -178,7 +178,7 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
         let remove = (channel: string) => {
             this.channels.get(channel)?.delete(conn.id);
 
-            if (this.channels?.get(channel).size === 0) {
+            if (this.channels?.get(channel)?.size === 0) {
                 this.channels.delete(channel);
             }
 

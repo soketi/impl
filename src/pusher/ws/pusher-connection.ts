@@ -7,12 +7,12 @@ export class PusherConnection extends BaseConnection implements FN.Pusher.Pusher
     timeout: any;
 
     constructor(
-        public id: FN.WS.ConnectionID,
+        public id: FN.WS.ConnectionID|null,
         public connection: FN.WS.SoketiNativeWebsocket,
     ) {
         super(id, connection);
 
-        this.id = this.generateSocketId();
+        this.id = id || this.generateSocketId();
         this.subscribedChannels = new Set();
         this.presence = new Map();
     }

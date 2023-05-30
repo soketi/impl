@@ -75,6 +75,7 @@ describe('pusher/channels/private-encrypted', () => {
 
         WsRouter.onConnectionClosed(async (conn) => {
             await conns.removeConnectionFromAllChannels(conn);
+            await conns.removeConnection(conn);
         });
 
         const conn = new PusherConnection('test', {
@@ -110,10 +111,6 @@ describe('pusher/channels/private-encrypted', () => {
     test('connect but get unauthorized', async () => new Promise<void>(async (done) => {
         const app = await AppsRegistry.getById('app-id') as TestApp;
         const conns = new LocalConnections(app, gossiper);
-
-        WsRouter.onConnectionClosed(async (conn) => {
-            await conns.unsubscribeFromAllChannels(conn);
-        });
 
         const conn = new PusherConnection('test', {
             send: (message) => {

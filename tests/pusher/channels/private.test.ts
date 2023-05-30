@@ -75,6 +75,7 @@ describe('pusher/channels/private', () => {
 
         WsRouter.onConnectionClosed(async (conn) => {
             await conns.unsubscribeFromAllChannels(conn);
+            await conns.removeConnection(conn);
         });
 
         const conn = new PusherConnection('test', {
