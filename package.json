@@ -1,5 +1,21 @@
 {
   "name": "@soketi/impl",
+  "description": "TypeScript boilerplate to use on your WebSocket implementations. Made with ❤️ at Soketi.",
+  "author": "soketi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soketi/impl"
+  },
+  "keywords": [
+    "soketi",
+    "websocket",
+    "typescript",
+    "boilerplate",
+    "uWebSockets.js",
+    "pusher",
+    "pusher-js"
+  ],
   "version": "0.0.0",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
