@@ -12,8 +12,17 @@ export class PusherConnection extends BaseConnection implements FN.Pusher.Pusher
     ) {
         super(id, connection);
 
+        this.id = this.generateSocketId();
         this.subscribedChannels = new Set();
         this.presence = new Map();
+    }
+
+    protected generateSocketId(): string {
+        let min = 0;
+        let max = 10_000_000_000;
+        let randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+
+        return `${randomNumber(min, max)}.${randomNumber(min, max)}`;
     }
 
     async handlePong(): Promise<void> {

@@ -33,10 +33,11 @@
   },
   "files": [
     "types/index.d.ts",
-    "src",
-    "dist"
+    "src"
   ],
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./src/index.ts",
+    "./types": "./types/index.d.ts",
+    "./src": "./src/index.ts"
   }
 }
