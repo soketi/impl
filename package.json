@@ -31,6 +31,7 @@
     "pusher-js": "^8.0.0"
   },
   "files": [
+    "./dist",
     "./types/index.d.ts"
   ],
   "exports": {
