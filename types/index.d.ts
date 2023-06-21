@@ -1,18 +1,19 @@
 export declare namespace JSON {
     type Value = Date|RegExp|string|number|boolean|null|JSON.Object|any;
-    type Object = JSON.Value[]|{ [key: string]: JSON.Value; };
+    type Object = { [key: string]: JSON.Value; };
+    type Array = JSON.Value[]|JSON.Object[];
 }
 
 export namespace Gossip {
-    type Response = JSON.Object|JSON.Value;
+    type Response = JSON.Object|JSON.Array|JSON.Value;
     type ResponseHandler = (msg: Gossip.Payload) => Promise<Gossip.Response>;
     type ResponseHandlers = { [topic: string]: ResponseHandler; };
-    type Payload = JSON.Object;
+    type Payload = JSON.Object|JSON.Array|JSON.Value;
 }
 
 export declare namespace WS {
     type ConnectionID = string;
-    type Message = JSON.Object|string;
+    type Message = JSON.Object|JSON.Array|JSON.Value;
 
     type Connection = {
         id: ConnectionID;

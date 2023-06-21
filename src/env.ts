@@ -7,7 +7,7 @@ export class Env {
         this.env = entity;
     }
 
-    static get(key: string, defaultValue: any = null): FN.JSON.Object {
+    static get(key: string, defaultValue: any = null): any {
         return this.env[key] || defaultValue;
     }
 }
