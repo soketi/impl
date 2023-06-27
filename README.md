@@ -98,10 +98,10 @@ server.on('new-connection', async originalConnection => {
 
 The router provides handlers for the following events:
 
-- `onNewConnection(async conn => {})` with `handleNewConnection(connection)`
-- `onConnectionClosed(async (conn, code, msg) => {})` with `handleConnectionClosed(connection, code, msg)`
-- `onMessage(async (conn, message) => {})` with `handleMessage(connection, message)`
-- `onError(async (conn, error) => {})` with `handleError(connection, error)`
+- `onNewConnection(async (conn, ...args?) => {})` with `handleNewConnection(connection, ...args?)`
+- `onConnectionClosed(async (conn, code, msg, ...args?) => {})` with `handleConnectionClosed(connection, code, msg, ...args?)`
+- `onMessage(async (conn, message, ...args?) => {})` with `handleMessage(connection, message, ...args?)`
+- `onError(async (conn, error, ...args?) => {})` with `handleError(connection, error, ...args?)`
 
 You can also register your own handlers:
 
@@ -116,7 +116,7 @@ WsRouter.registerHandler('onPing', async conn => {
 server.on('ping', async originalConnection => {
     // Get the existing connection on a ping or message.
     if (conns.connections.get(originalConnection.id)) {
-        await WsRouter.getProtocol('onPing').handle(connection);
+        await WsRouter.handle('onPing', connection);
     }
 });
 ```
