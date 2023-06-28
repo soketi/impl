@@ -43,98 +43,98 @@ export abstract class App implements FN.Pusher.PusherApps.App {
     static readonly schema = {
         id: {
             default: 'app-id',
-            paramters: ['id'],
+            parameters: ['id'],
         },
         key: {
             default: 'app-key',
-            paramters: ['key'],
+            parameters: ['key'],
         },
         secret: {
             default: 'app-secret',
-            paramters: ['secret'],
+            parameters: ['secret'],
         },
         enableClientMessages: {
             default: false,
-            paramters: ['enableClientMessages'],
+            parameters: ['enableClientMessages'],
             parsers: [Boolean],
         },
         enableMetrics: {
             default: false,
-            paramters: ['enableMetrics'],
+            parameters: ['enableMetrics'],
             parsers: [Boolean],
         },
         enabled: {
             default: true,
-            paramters: ['enabled'],
+            parameters: ['enabled'],
             parsers: [Boolean],
         },
         maxConnections: {
             default: -1,
-            paramters: ['maxConnections'],
+            parameters: ['maxConnections'],
             parsers: [parseInt],
         },
         maxBackendEventsPerSecond: {
             default: -1,
-            paramters: ['maxBackendEventsPerSecond'],
+            parameters: ['maxBackendEventsPerSecond'],
             parsers: [parseInt],
         },
         maxClientEventsPerSecond: {
             default: -1,
-            paramters: ['maxClientEventsPerSecond'],
+            parameters: ['maxClientEventsPerSecond'],
             parsers: [parseInt],
         },
         maxReadRequestsPerSecond: {
             default: -1,
-            paramters: ['maxReadRequestsPerSecond'],
+            parameters: ['maxReadRequestsPerSecond'],
             parsers: [parseInt],
         },
         webhooks: {
             default: '[]',
-            paramters: ['webhooks'],
+            parameters: ['webhooks'],
             parsers: [
                 'transformPotentialJsonToArray',
             ],
         },
         channelMessageLimits: {
             default: '[]',
-            paramters: ['channelMessageLimits'],
+            parameters: ['channelMessageLimits'],
             parsers: [
                 'transformPotentialJsonToArray',
             ],
         },
         maxPresenceMembersPerChannel: {
             default: (env?: FN.Pusher.PusherEnvironment) => env?.PRESENCE_MAX_MEMBERS || 100,
-            paramters: ['maxPresenceMembersPerChannel'],
+            parameters: ['maxPresenceMembersPerChannel'],
             parsers: [parseInt],
         },
         maxPresenceMemberSizeInKb: {
             default: (env?: FN.Pusher.PusherEnvironment) => env?.PRESENCE_MAX_MEMBER_SIZE || 2,
-            paramters: ['maxPresenceMemberSizeInKb'],
+            parameters: ['maxPresenceMemberSizeInKb'],
             parsers: [parseFloat],
         },
         maxChannelNameLength: {
             default: (env?: FN.Pusher.PusherEnvironment) => env?.CHANNEL_LIMITS_MAX_NAME_LENGTH || 200,
-            paramters: ['maxChannelNameLength'],
+            parameters: ['maxChannelNameLength'],
             parsers: [parseInt],
         },
         maxEventChannelsAtOnce: {
             default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_CHANNELS_AT_ONCE || 100,
-            paramters: ['maxEventChannelsAtOnce'],
+            parameters: ['maxEventChannelsAtOnce'],
             parsers: [parseInt],
         },
         maxEventNameLength: {
             default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_NAME_LENGTH || 200,
-            paramters: ['maxEventNameLength'],
+            parameters: ['maxEventNameLength'],
             parsers: [parseInt],
         },
         maxEventPayloadInKb: {
             default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_SIZE_IN_KB || 100,
-            paramters: ['maxEventPayloadInKb'],
+            parameters: ['maxEventPayloadInKb'],
             parsers: [parseFloat],
         },
         maxEventBatchSize: {
             default: (env?: FN.Pusher.PusherEnvironment) => env?.EVENT_MAX_BATCH_SIZE || 10,
-            paramters: ['maxEventBatchSize'],
+            parameters: ['maxEventBatchSize'],
             parsers: [parseInt],
         },
     };
@@ -154,7 +154,7 @@ export abstract class App implements FN.Pusher.PusherApps.App {
         for (let key in App.schema) {
             let def = App.schema[key];
 
-            for (let parameter of def.paramters) {
+            for (let parameter of def.parameters) {
                 let value = object[parameter] || (
                     typeof def.default === 'function'
                         ? def.default(env)
