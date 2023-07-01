@@ -38,4 +38,8 @@ export abstract class Gossiper {
         peers: string[],
         message: FN.Gossip.Payload,
     ): Promise<FN.Gossip.Response[]>;
+
+    async cleanup(): Promise<void> {
+        //
+    }
 }
