@@ -35,4 +35,8 @@ export class AppsRegistry {
     static async initializeApp(scheme: FN.Pusher.PusherApps.AppScheme): Promise<FN.Pusher.PusherApps.App> {
         return await this.getDriver().initializeApp(scheme);
     }
+
+    static async cleanup(): Promise<void> {
+        return await this.getDriver().cleanup();
+    }
 }
