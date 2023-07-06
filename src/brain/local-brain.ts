@@ -3,11 +3,12 @@ import { Brain } from './brain';
 
 export class LocalBrain extends Brain {
     memory: Map<string, FN.Brain.BrainRecord> = new Map();
+    cleanupInterval: NodeJS.Timer;
 
     constructor() {
         super();
 
-        setInterval(() => {
+        this.cleanupInterval = setInterval(() => {
             for (let [key, { ttlSeconds, setTime }] of [...this.memory]) {
                 let currentTime = parseInt((new Date().getTime() / 1000) as unknown as string);
 
@@ -40,5 +41,10 @@ export class LocalBrain extends Brain {
 
     async delete(key: string): Promise<void> {
         this.memory.delete(key);
+    }
+
+    async cleanup(): Promise<void> {
+        this.memory.clear();
+        clearInterval(this.cleanupInterval);
     }
 }
