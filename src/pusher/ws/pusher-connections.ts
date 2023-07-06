@@ -8,6 +8,8 @@ import { Gossiper } from '../../gossiper';
 export class PusherConnections extends BaseConnections implements FN.Pusher.PusherWS.PusherConnections {
     readonly started: Date;
     readonly channels: Map<string, Set<string>> = new Map;
+    readonly users: Map<FN.Pusher.PusherWS.UserID, Set<FN.WS.ConnectionID>> = new Map();
+
     constructor(
         protected app: FN.Pusher.PusherApps.App,
         protected readonly gossiper: Gossiper,
@@ -16,6 +18,56 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
         super();
 
         this.started = new Date;
+    }
+
+    async newConnection(conn: FN.Pusher.PusherWS.PusherConnection): Promise<void> {
+        await super.newConnection(conn);
+
+        await conn.sendJson({
+            event: 'pusher:connection_established',
+            data: JSON.stringify({
+                socket_id: conn.id,
+                activity_timeout: 30,
+            }),
+        });
+
+        if (this.app.enableUserAuthentication) {
+            conn.userAuthenticationTimeout = setTimeout(() => {
+                conn.sendError({
+                    event: 'pusher:error',
+                    data: {
+                        code: 4009,
+                        message: 'Connection not authorized within timeout.',
+                    },
+                }, 4009, 'Connection not authorized within timeout.');
+            }, this.app.userAuthenticationTimeout);
+        }
+    }
+
+    async removeConnection(conn: FN.Pusher.PusherWS.PusherConnection): Promise<void> {
+        conn.closed = true;
+
+        if (conn.timeout) {
+            clearTimeout(conn.timeout);
+        }
+
+        if (conn.userAuthenticationTimeout) {
+            clearTimeout(conn.userAuthenticationTimeout);
+        }
+
+        await this.unsubscribeFromAllChannels(conn);
+
+        if (conn.user) {
+            if (this.users.has(conn.user.id)) {
+                this.users.get(conn.user.id).delete(conn.id);
+            }
+
+            if (this.users.get(conn.user.id) && this.users.get(conn.user.id).size === 0) {
+                this.users.delete(conn.user.id);
+            }
+        }
+
+        super.removeConnection(conn);
     }
 
     async addToChannel(conn: FN.Pusher.PusherWS.PusherConnection, channel: string): Promise<number> {
@@ -268,6 +320,69 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
         // );
     }
 
+    async handleSignin(
+        conn: FN.Pusher.PusherWS.PusherConnection,
+        message: FN.Pusher.PusherWS.PusherMessage,
+    ): Promise<void> {
+        if (!conn.userAuthenticationTimeout) {
+            return;
+        }
+
+        const tokenIsValid = await this.app.signinTokenIsValid(
+            conn.id,
+            message.data.user_data,
+            message.data.auth,
+        );
+
+        if (!tokenIsValid) {
+            return conn.sendError({
+                event: 'pusher:error',
+                data: {
+                    code: 4009,
+                    message: 'Connection not authorized.',
+                },
+            }, 4009, 'Connection not authorized.');
+        }
+
+        const decodedUser = JSON.parse(message.data.user_data);
+
+        if (!decodedUser.id) {
+            return conn.sendError({
+                event: 'pusher:error',
+                data: {
+                    code: 4009,
+                    message: 'The returned user data must contain the "id" field.',
+                },
+            }, 4009, 'The returned user data must contain the "id" field.');
+        }
+
+        conn.user = {
+            ...decodedUser,
+            ...{
+                id: decodedUser.id.toString(),
+            },
+        };
+
+        if (conn.userAuthenticationTimeout) {
+            clearTimeout(conn.userAuthenticationTimeout);
+        }
+
+        if (conn.user) {
+            if (!this.users.has(conn.user.id)) {
+                this.users.set(conn.user.id, new Set());
+            }
+
+            if (!this.users.get(conn.user.id).has(conn.id)) {
+                this.users.get(conn.user.id).add(conn.id);
+            }
+        }
+
+        conn.sendJson({
+            event: 'pusher:signin_success',
+            data: message.data,
+        });
+    }
+
     async getConnections(forceLocal = false): Promise<Map<
         string,
         FN.Pusher.PusherWS.PusherConnection|FN.Pusher.PusherWS.PusherRemoteConnection
@@ -473,6 +588,34 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
         return this.callMethodAggregators.getChannelMembersCount(gossipResponses, options);
     }
 
+    async terminateUserConnections(userId: FN.Pusher.PusherWS.UserID, forceLocal = false): Promise<void> {
+        if (forceLocal) {
+            const connectionIds = this.users.get(userId.toString()) || new Set<string>();
+
+            for await (let connId of [...connectionIds]) {
+                this.connections.get(connId)?.close(4009, 'You got disconnected by the app.');
+            }
+
+            return;
+        }
+
+        let options: FN.Pusher.PusherGossip.GossipDataOptions = {
+            appId: this.app.id,
+            userId: userId.toString(),
+        };
+
+        this.callOthers({
+            topic: 'callMethod',
+            data: {
+                methodToCall: 'terminateUserConnections',
+                options,
+            },
+        });
+
+        // Also terminate locally.
+        this.terminateUserConnections(userId.toString(), true);
+    }
+
     async send(channel: string, data: FN.Pusher.PusherWS.SentPusherMessage, exceptingId: string|null = null, forceLocal = false): Promise<void> {
         if (forceLocal) {
             let connections = await this.getChannelConnections(channel, true) as Map<string, FN.Pusher.PusherWS.PusherConnection>;
@@ -672,6 +815,9 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
 
                 return localChannelMembersCount;
             },
+            terminateUserConnections: async (gossipResponses: FN.Gossip.Response[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
+                //
+            },
             send: async (gossipResponses: FN.Gossip.Response[], options?: FN.Pusher.PusherGossip.GossipDataOptions) => {
                 //
             },
@@ -715,6 +861,17 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
             getChannelMembersCount: async ({ channel }: FN.Pusher.PusherGossip.GossipDataOptions) => ({
                 totalCount: await this.getChannelMembersCount(channel, true),
             }),
+            terminateUserConnections: async ({ userId, appId }: FN.Pusher.PusherGossip.GossipDataOptions) => {
+                if (appId !== this.app.id) {
+                    return;
+                }
+
+                await this.terminateUserConnections(userId, true);
+
+                return {
+                    //
+                };
+            },
             send: async ({ channel, sentPusherMessage, exceptingId }: FN.Pusher.PusherGossip.GossipDataOptions) => {
                 await this.send(
                     channel,

@@ -84,7 +84,7 @@ class TestApp extends App {
     }
 
     async createToken(params: string): Promise<string> {
-        return Pusher.Token(this.key, this.secret).sign(params);
+        return new Pusher.Token(this.key, this.secret).sign(params);
     }
 
     async sha256(): Promise<string> {

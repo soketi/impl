@@ -4,7 +4,9 @@ import { Connection as BaseConnection } from '../../ws';
 export class PusherConnection extends BaseConnection implements FN.Pusher.PusherWS.PusherConnection {
     subscribedChannels: Set<string>;
     presence: Map<string, FN.Pusher.PusherWS.Presence.PresenceMember>;
-    timeout: any;
+    timeout: NodeJS.Timeout;
+    userAuthenticationTimeout: NodeJS.Timeout;
+    user: FN.JSON.Object|null;
 
     constructor(
         public id: FN.WS.ConnectionID|null,
@@ -15,6 +17,7 @@ export class PusherConnection extends BaseConnection implements FN.Pusher.Pusher
         this.id = id || this.generateSocketId();
         this.subscribedChannels = new Set();
         this.presence = new Map();
+        this.user = null;
     }
 
     protected generateSocketId(): string {
@@ -70,6 +73,7 @@ export class PusherConnection extends BaseConnection implements FN.Pusher.Pusher
     toRemote(remoteInstanceId?: string): FN.Pusher.PusherWS.PusherRemoteConnection {
         return {
             ...super.toRemote(remoteInstanceId),
+            user: this.user,
             subscribedChannels: [...this.subscribedChannels],
             presence: [...this.presence].map(([channel, member]) => ({ channel, member })),
         };

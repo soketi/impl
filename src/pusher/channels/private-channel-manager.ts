@@ -29,13 +29,11 @@ export class PrivateChannelManager extends PublicChannelManager implements FN.Pu
         message: FN.Pusher.PusherWS.PusherMessage,
         signatureToCheck: string,
     ): Promise<boolean> {
-        let token = await this.app.createToken(
+        const token = await this.app.createToken(
             this.getDataToSignForSignature(socketId, message)
         );
 
-        let expectedSignature = this.app.key + ':' + token;
-
-        return expectedSignature === signatureToCheck;
+        return this.app.key + ':' + token === signatureToCheck;
     }
 
     getDataToSignForSignature(socketId: string, message: FN.Pusher.PusherWS.PusherMessage): string {

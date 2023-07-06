@@ -33,8 +33,10 @@ describe('pusher/ws', () => {
 
         const conn = new PusherConnection('test', {
             send: async (message) => {
-                expect(message).toBe('{"event":"pusher:pong","data":{}}');
-                done();
+                if (message.indexOf('pong') !== -1) {
+                    expect(message).toBe('{"event":"pusher:pong","data":{}}');
+                    done();
+                }
             },
             close: (code, reason) => {
                 //
@@ -100,6 +102,112 @@ describe('pusher/ws', () => {
             },
         });
     }));
+
+    test('signin', () => new Promise<void>(async (done) => {
+        const app = await AppsRegistry.initializeApp({ enableUserAuthentication: true });
+        apps.apps.set('app-id', app);
+        apps.apps.set('app-key', app);
+
+        const conns = new LocalConnections(app, gossiper, brain);
+
+        const userData = {
+            id: 1,
+            name: 'test',
+        };
+
+        const userDataAsString = JSON.stringify(userData);
+
+        let messageData = async (connId) => ({
+            auth: app.key + ':' + (await app.calculateSigninToken(connId, userDataAsString)),
+            user_data: userDataAsString,
+        });
+
+        const conn = new PusherConnection('test', {
+            send: async (message) => {
+                if (message.indexOf('pusher:signin_success') !== -1) {
+                    expect(message).toBe(JSON.stringify({
+                        event: 'pusher:signin_success',
+                        data: await messageData(conn.id),
+                    }));
+                    done();
+                }
+            },
+            close: (code, reason) => {
+                //
+            },
+        });
+
+        await conns.newConnection(conn);
+        await conns.handleSignin(conn, {
+            event: 'pusher:signin',
+            data: await messageData(conn.id),
+        });
+    }));
+
+    test('signin but dont process signin', () => new Promise<void>(async (done) => {
+        const app = await AppsRegistry.initializeApp({
+            enableUserAuthentication: true,
+            userAuthenticationTimeout: 2_000,
+        });
+
+        apps.apps.set('app-id', app);
+        apps.apps.set('app-key', app);
+
+        const conns = new LocalConnections(app, gossiper, brain);
+
+        const conn = new PusherConnection('test', {
+            send: async (message) => {
+                //
+            },
+            close: (code, reason) => {
+                expect(code).toBe(4009);
+                done();
+            },
+        });
+
+        await conns.newConnection(conn);
+
+        await new Promise((resolve) => setTimeout(resolve, 2100));
+    }));
+
+    test('terminate user connections', () => new Promise<void>(async (done) => {
+        const app = await AppsRegistry.initializeApp({ enableUserAuthentication: true });
+        apps.apps.set('app-id', app);
+        apps.apps.set('app-key', app);
+
+        const conns = new LocalConnections(app, gossiper, brain);
+
+        const userData = {
+            id: 1,
+            name: 'test',
+        };
+
+        const userDataAsString = JSON.stringify(userData);
+
+        let messageData = async (connId) => ({
+            auth: app.key + ':' + (await app.calculateSigninToken(connId, userDataAsString)),
+            user_data: userDataAsString,
+        });
+
+        const conn = new PusherConnection('test', {
+            send: async (message) => {
+                if (message.indexOf('pusher:signin_success') !== -1) {
+                    await conns.terminateUserConnections(userData.id);
+                }
+            },
+            close: (code, reason) => {
+                expect(code).toBe(4009);
+                expect(reason).toBe('You got disconnected by the app.');
+                done();
+            },
+        });
+
+        await conns.newConnection(conn);
+        await conns.handleSignin(conn, {
+            event: 'pusher:signin',
+            data: await messageData(conn.id),
+        });
+    }));
 });
 
 class LocalConnections extends PusherConnections {
@@ -114,7 +222,7 @@ class TestApp extends App {
     }
 
     async createToken(params: string): Promise<string> {
-        return Pusher.Token(this.key, this.secret).sign(params);
+        return new Pusher.Token(this.key, this.secret).sign(params);
     }
 
     async sha256(): Promise<string> {

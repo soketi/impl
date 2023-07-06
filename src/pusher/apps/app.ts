@@ -5,6 +5,8 @@ export abstract class App implements FN.Pusher.PusherApps.App {
     key: string;
     secret: string;
 
+    enableUserAuthentication?: boolean;
+    userAuthenticationTimeout?: number;
     enableClientMessages: boolean;
     enableMetrics: boolean;
     enabled: boolean;
@@ -52,6 +54,16 @@ export abstract class App implements FN.Pusher.PusherApps.App {
         secret: {
             default: 'app-secret',
             parameters: ['secret'],
+        },
+        enableUserAuthentication: {
+            default: false,
+            parameters: ['enableUserAuthentication'],
+            parsers: [Boolean],
+        },
+        userAuthenticationTimeout: {
+            default: 10_000,
+            parameters: ['userAuthenticationTimeout'],
+            parsers: [parseInt],
         },
         enableClientMessages: {
             default: false,
@@ -192,12 +204,12 @@ export abstract class App implements FN.Pusher.PusherApps.App {
     abstract createToken(params: string): Promise<string>;
     abstract sha256(): Promise<string>;
 
-    async calculateSigningToken(
+    async calculateRequestToken(
         params: { [key: string]: string },
         method: string,
         path: string,
         body?: string,
-    ): Promise<string> {;
+    ): Promise<string> {
         params['auth_key'] = this.key;
 
         delete params['auth_signature'];
@@ -211,6 +223,14 @@ export abstract class App implements FN.Pusher.PusherApps.App {
         }
 
         return await this.createToken([method, path, App.toOrderedArray(params).join('&')].join("\n"));
+    }
+
+    async calculateSigninToken(connId: string, userData: string): Promise<string> {
+        return await this.createToken(`${connId}::user::${userData}`);
+    }
+
+    async signinTokenIsValid(connId: string, userData: string, receivedToken: string): Promise<boolean> {
+        return `${this.key}:${await this.calculateSigninToken(connId, userData)}` === receivedToken;
     }
 
     protected transformPotentialJsonToArray(potentialJson: any): any {

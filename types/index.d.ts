@@ -70,8 +70,13 @@ export declare namespace Pusher {
     };
 
     namespace PusherWS {
+        type UserID = string;
+
         type PusherConnection = {
             subscribedChannels: Set<string>;
+            timeout: NodeJS.Timeout;
+            userAuthenticationTimeout: NodeJS.Timeout;
+            user: JSON.Object|null;
             presence: Map<string, Presence.PresenceMember>;
             handlePong(): Promise<void>;
             updateTimeout(): Promise<void>;
@@ -79,6 +84,7 @@ export declare namespace Pusher {
 
         type PusherRemoteConnection = {
             subscribedChannels: string[];
+            user: JSON.Object|null;
             presence: {
                 channel: string;
                 member: Presence.PresenceMember;
@@ -97,6 +103,7 @@ export declare namespace Pusher {
         type PusherMessageData = {
             channel_data?: string;
             channel?: string;
+            user_data?: string;
             [key: string]: any;
         }
 
@@ -124,6 +131,7 @@ export declare namespace Pusher {
             unsubscribeFromAllChannels(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
             unsubscribeFromChannel(conn: PusherConnection, channel: string): Promise<void>;
             handleClientEvent(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
+            handleSignin(conn: PusherConnection, message: PusherWS.PusherMessage): Promise<void>;
 
             getConnections(forceLocal?: boolean): Promise<Map<string, PusherWS.PusherConnection|PusherRemoteConnection>>;
             isInChannel(connId: string, channel: string, forceLocal?: boolean): Promise<boolean>;
@@ -202,6 +210,8 @@ export declare namespace Pusher {
             id?: string;
             key?: string;
             secret?: string;
+            enableUserAuthentication?: boolean;
+            userAuthenticationTimeout?: number;
             enableClientMessages?: boolean;
             enabled?: boolean;
             enableMetrics?: boolean;
@@ -231,6 +241,14 @@ export declare namespace Pusher {
             calculateBodyMd5(body: string): Promise<string>;
             createToken(params: string): Promise<string>;
             sha256(): Promise<string>;
+            calculateRequestToken(
+                params: { [key: string]: string },
+                method: string,
+                path: string,
+                body?: string,
+            ): Promise<string>;
+            calculateSigninToken(connId: string, userData: string): Promise<string>;
+            signinTokenIsValid(connId: string, userData: string, receivedToken: string): Promise<boolean>;
         } & AppScheme;
     }
 
@@ -246,11 +264,13 @@ export declare namespace Pusher {
         }
 
         type GossipDataOptions = {
+            appId?: string;
             channel?: string;
             connId?: string;
             sentPusherMessage?: string;
             exceptingId?: string|null;
             amount?: number;
+            userId?: PusherWS.UserID;
         }
 
         type GossipData = {
