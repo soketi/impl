@@ -1,4 +1,5 @@
 import type * as FN from '@soketi/impl/types';
+import { Brain } from '../../brain';
 import { Connections as BaseConnections } from '../../ws';
 import { EncryptedPrivateChannelManager, PresenceChannelManager, PrivateChannelManager, PublicChannelManager } from '../channels';
 import { PusherConnection, Utils } from '../';
@@ -10,6 +11,7 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
     constructor(
         protected app: FN.Pusher.PusherApps.App,
         protected readonly gossiper: Gossiper,
+        protected readonly brain: Brain,
     ) {
         super();
 
@@ -508,16 +510,19 @@ export class PusherConnections extends BaseConnections implements FN.Pusher.Push
     }
 
     async sendMissedCacheIfExists(conn: FN.Pusher.PusherWS.PusherConnection, channel: string) {
-        // TODO: Caching module
-        /* let cachedEvent = await this.env.APPS.get(
+        let cachedEvent = await this.brain.get(
             `app_${this.app.id}_channel_${channel}_cache_miss`,
         );
 
         if (cachedEvent) {
-            conn.sendJson({ event: 'pusher:cache_miss', channel, data: cachedEvent });
+            conn.sendJson({
+                event: 'pusher:cache_miss',
+                channel,
+                data: cachedEvent,
+            });
         } else {
-            // TODO: this.webhooks.sendCacheMissed(channel);
-        } */
+            // TODO: Send webhook event.
+        }
     }
 
     async getChannelManagerFor(channel: string): Promise<FN.Pusher.Channels.ChannelManager> {

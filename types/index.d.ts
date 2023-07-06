@@ -11,6 +11,14 @@ export namespace Gossip {
     type Payload = JSON.Object|JSON.Array|JSON.Value;
 }
 
+export namespace Brain {
+    type BrainRecord = {
+        value: JSON.Value;
+        ttlSeconds: number;
+        setTime: number;
+    };
+}
+
 export declare namespace WS {
     type ConnectionID = string;
     type Message = JSON.Object|JSON.Array|JSON.Value;

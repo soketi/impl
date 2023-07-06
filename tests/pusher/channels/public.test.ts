@@ -6,16 +6,19 @@ import { PusherConnection, PusherConnections } from '../../../src/pusher/ws';
 import { Router as WsRouter } from '../../../src/ws';
 import { describe, test, expect, beforeEach } from 'vitest';
 import { createHmac } from 'crypto';
+import { Brain, LocalBrain } from '../../../src/brain';
 
 const pusherUtil = require('pusher/lib/util');
 const Pusher = require('pusher');
 
 let apps: TestAppsManager;
 let gossiper: NoGossiper;
+let brain: Brain;
 
 beforeEach(() => {
     apps = new TestAppsManager();
     gossiper = new NoGossiper();
+    brain = new LocalBrain();
 
     AppsRegistry.registerDriver('default', apps);
     AppsRegistry.initializeApp({}).then((app: TestApp) => {
@@ -35,7 +38,7 @@ beforeEach(() => {
 describe('pusher/channels/public', () => {
     test('join and leave', async () => {
         const app = await AppsRegistry.getById('app-id') as TestApp;
-        const conns = new LocalConnections(app, gossiper);
+        const conns = new LocalConnections(app, gossiper, brain);
 
         const conn = new PusherConnection('test', {
             send: (message) => {
@@ -66,7 +69,7 @@ describe('pusher/channels/public', () => {
 
     test('connect and disconnect', async () => new Promise<void>(async (done) => {
         const app = await AppsRegistry.getById('app-id') as TestApp;
-        const conns = new LocalConnections(app, gossiper);
+        const conns = new LocalConnections(app, gossiper, brain);
 
         WsRouter.onConnectionClosed(async (conn) => {
             await conns.unsubscribeFromAllChannels(conn);

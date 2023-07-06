@@ -5,16 +5,19 @@ import { App, AppsManager, AppsRegistry } from '../../src/pusher/apps';
 import { PusherConnection, PusherConnections } from '../../src/pusher/ws';
 import { describe, test, expect, beforeEach } from 'vitest';
 import { createHmac } from 'crypto';
+import { Brain, LocalBrain } from '../../src/brain';
 
 const pusherUtil = require('pusher/lib/util');
 const Pusher = require('pusher');
 
 let apps: TestAppsManager;
 let gossiper: NoGossiper;
+let brain: Brain;
 
 beforeEach(() => {
     apps = new TestAppsManager();
     gossiper = new NoGossiper();
+    brain = new LocalBrain();
 
     AppsRegistry.registerDriver('default', apps);
     AppsRegistry.initializeApp({}).then((app: TestApp) => {
@@ -26,7 +29,7 @@ beforeEach(() => {
 describe('pusher/ws', () => {
     test('handle ping pongs', () => new Promise<void>(async (done) => {
         const app = await AppsRegistry.getById('app-id') as TestApp;
-        const conns = new LocalConnections(app, gossiper);
+        const conns = new LocalConnections(app, gossiper, brain);
 
         const conn = new PusherConnection('test', {
             send: async (message) => {
@@ -49,7 +52,7 @@ describe('pusher/ws', () => {
         apps.apps.set('app-id', app);
         apps.apps.set('app-key', app);
 
-        const conns = new LocalConnections(app, gossiper);
+        const conns = new LocalConnections(app, gossiper, brain);
 
         const otherConn = new PusherConnection('other', {
             send: async (message) => {
