@@ -6,6 +6,7 @@ import { PusherConnection, PusherConnections } from '../../src/pusher/ws';
 import { describe, test, expect, beforeEach } from 'vitest';
 import { createHmac } from 'crypto';
 import { Brain, LocalBrain } from '../../src/brain';
+import { PusherBrainMetrics } from '../../src/pusher';
 
 const pusherUtil = require('pusher/lib/util');
 const Pusher = require('pusher');
@@ -192,6 +193,11 @@ describe('pusher/ws', () => {
         const conn = new PusherConnection('test', {
             send: async (message) => {
                 if (message.indexOf('pusher:signin_success') !== -1) {
+                    expect(message).toBe(JSON.stringify({
+                        event: 'pusher:signin_success',
+                        data: await messageData(conn.id),
+                    }));
+
                     await conns.terminateUserConnections(userData.id);
                 }
             },
@@ -208,6 +214,69 @@ describe('pusher/ws', () => {
             data: await messageData(conn.id),
         });
     }));
+
+    test('join and leave triggers metrics change', async () => {
+        const app = await AppsRegistry.getById('app-id') as TestApp;
+        const conns = new LocalConnections(app, gossiper, brain);
+        const metrics = new PusherBrainMetrics(brain, conns);
+
+        const conn = new PusherConnection('test', {
+            send: (message) => {
+                //
+            },
+            close: (code, reason) => {
+                //
+            },
+        });
+
+        await conns.newConnection(conn);
+
+        await conns.subscribeToChannel(conn, {
+            event: 'pusher:subscribe',
+            data: {
+                channel: 'test',
+            },
+        });
+
+        expect([...conn.subscribedChannels]).toEqual(['test']);
+        expect(conn.presence).toEqual(new Map());
+        expect(conns.channels.get('test')).lengthOf(1);
+
+        await metrics.snapshot(app.id);
+        expect(await metrics.get(app.id)).toEqual({
+            connections: 1,
+            channels: [{
+                channel: 'test',
+                connections: 1,
+            }],
+            users: [],
+            started: conns.started.toISOString(),
+        });
+
+        await conns.unsubscribeFromChannel(conn, 'test');
+
+        expect([...conn.subscribedChannels]).toEqual([]);
+        expect(conn.presence).toEqual(new Map());
+        expect(conns.channels.get('test')).toBeUndefined();
+
+        await metrics.snapshot(app.id);
+        expect(await metrics.get(app.id)).toEqual({
+            connections: 1,
+            channels: [],
+            users: [],
+            started: conns.started.toISOString(),
+        });
+
+        await conns.removeConnection(conn);
+
+        await metrics.snapshot(app.id);
+        expect(await metrics.get(app.id)).toEqual({
+            connections: 0,
+            channels: [],
+            users: [],
+            started: conns.started.toISOString(),
+        });
+    });
 });
 
 class LocalConnections extends PusherConnections {
