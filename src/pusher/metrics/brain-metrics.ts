@@ -14,7 +14,7 @@ export class PusherBrainMetrics extends BrainMetrics {
         this.snapshotInProgress = true;
 
         await this.brain.set(`metrics:${namespace}`, {
-            connections: this.connections.connections.size,
+            total_connections: this.connections.connections.size,
             channels: [...this.connections.channels].map(([channel, connections]) => ({
                 channel,
                 connections: connections.size,

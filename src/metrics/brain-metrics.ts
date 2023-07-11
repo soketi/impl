@@ -17,7 +17,7 @@ export class BrainMetrics extends Metrics {
         this.snapshotInProgress = true;
 
         await this.brain.set(`metrics:${namespace}`, {
-            connections: this.connections.connections.size,
+            total_connections: this.connections.connections.size,
         });
 
         this.snapshotInProgress = false;
