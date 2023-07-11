@@ -19,7 +19,7 @@ describe('ws/connection', () => {
                 expect(await metrics.get('test')).toEqual({
                     total_connections: 1,
                     sent_messages: {
-                        [`d:${(new Date).getUTCDay().toString()}`]: {
+                        [`d:${(new Date).getUTCDate().toString()}`]: {
                             [`h:${(new Date).getUTCHours().toString()}`]: 1,
                         },
                     },

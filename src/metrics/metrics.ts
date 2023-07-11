@@ -42,7 +42,7 @@ export abstract class Metrics {
         return [
             namespace,
             key,
-            `d:${(new Date).getUTCDay().toString()}`,
+            `d:${(new Date).getUTCDate().toString()}`,
             `h:${(new Date).getUTCHours().toString()}`,
         ];
     }
