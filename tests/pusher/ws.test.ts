@@ -244,7 +244,7 @@ describe('pusher/ws', () => {
 
         await metrics.snapshot(app.id);
         expect(await metrics.get(app.id)).toEqual({
-            connections: 1,
+            total_connections: 1,
             channels: [{
                 channel: 'test',
                 connections: 1,
@@ -261,7 +261,7 @@ describe('pusher/ws', () => {
 
         await metrics.snapshot(app.id);
         expect(await metrics.get(app.id)).toEqual({
-            connections: 1,
+            total_connections: 1,
             channels: [],
             users: [],
             started: conns.started.toISOString(),
@@ -271,7 +271,7 @@ describe('pusher/ws', () => {
 
         await metrics.snapshot(app.id);
         expect(await metrics.get(app.id)).toEqual({
-            connections: 0,
+            total_connections: 0,
             channels: [],
             users: [],
             started: conns.started.toISOString(),

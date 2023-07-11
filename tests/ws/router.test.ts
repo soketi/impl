@@ -21,7 +21,7 @@ describe('ws/router', () => {
 
         await metrics.snapshot('test');
         expect(await metrics.get('test')).toEqual({
-            connections: 1,
+            total_connections: 1,
         });
 
         expect(await metrics.get('test2')).toEqual({});
