@@ -15,7 +15,7 @@ export class Connection implements FN.WS.Connection {
     }
 
     async sendJson(message: FN.WS.Message): Promise<void> {
-        this.connection.send(
+        this.send(
             typeof message === 'string'
                 ? message
                 : JSON.stringify(message),

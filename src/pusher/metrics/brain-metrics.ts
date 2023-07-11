@@ -24,6 +24,7 @@ export class PusherBrainMetrics extends BrainMetrics {
                 connections,
             })),
             started: this.connections.started.toISOString(),
+            ...this.metrics[namespace] || {},
         });
 
         this.snapshotInProgress = false;

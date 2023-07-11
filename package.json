@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "arraybuffer-to-string": "^1.0.2",
+    "dot-wild": "^3.0.1",
     "pusher": "^5.0.0",
     "pusher-js": "^8.0.0"
   },

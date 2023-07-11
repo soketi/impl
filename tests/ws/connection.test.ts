@@ -1,12 +1,30 @@
+import { LocalBrain } from '../../src/brain';
+import { BrainMetrics } from '../../src/metrics';
 import { Connection, Connections } from '../../src/ws';
 import { describe, test, expect } from 'vitest';
 
 describe('ws/connection', () => {
     test('send', () => new Promise<void>(async (resolve) => {
         const connections = new LocalConnections();
+        const brain = new LocalBrain();
+        const metrics = new BrainMetrics(brain, connections);
+
         const conn = new Connection('test', {
-            send: (message: string) => {
+            send: async (message: string) => {
                 expect(message).toBe('test');
+
+                await metrics.increment('test', 'sent_messages');
+                await metrics.snapshot('test');
+
+                expect(await metrics.get('test')).toEqual({
+                    total_connections: 1,
+                    sent_messages: {
+                        [`d:${(new Date).getUTCDay().toString()}`]: {
+                            [`h:${(new Date).getUTCHours().toString()}`]: 1,
+                        },
+                    },
+                });
+
                 resolve();
             },
         });
