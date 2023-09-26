@@ -1,0 +1,13 @@
+FROM --platform=$TARGETPLATFORM node:18-bullseye-slim
+
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY . /app
+
+RUN npm ci ; \
+    npm run npm:install ; \
+    npm run build
+
+ENV NODE_OPTIONS="--es-module-specifier-resolution=node --experimental-vm-modules"

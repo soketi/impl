@@ -1,3 +1,13 @@
 coverage/
+.coverage/
+.docs/
+build/
 dist/
 node_modules/
+package-lock.json
+yarn.lock
+
+# IDE
+.DS_Store
+.wakatime-project
+.vscode
