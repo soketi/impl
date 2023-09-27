@@ -4,6 +4,7 @@ export interface Connection<
     NativeConnection = NativeWebsocket,
 > {
     id: ID;
+    namespace: string;
     connection: NativeConnection;
     closed: boolean;
     handlers: NativeConnectionHandlers<Message>;
@@ -18,6 +19,7 @@ export interface Connection<
 
 export type RemoteConnection<ID = string> = {
     id: ID;
+    namespace?: string;
 }
 
 export type NativeConnectionHandlers<M = any> = {
@@ -34,18 +36,21 @@ export interface Connections<
     C extends Connection = Connection,
     Message = any
 > {
-    readonly connections: Map<string, C>;
+    readonly connections: Map<string, Map<C['id'], C>>;
+
+    namespace(namespace: string): Map<string, C>;
+    hasNamespace(namespace: string): boolean;
 
     newConnection(conn: C): Promise<void>;
-    removeConnection(conn: C): Promise<void>;
+    removeConnection(conn: C, onEmptyNamespace?: () => Promise<void>): Promise<void>;
     drainConnections(timeout: number, message?: string, code?: number): Promise<void>;
-    getConnection(id: C['id']): Promise<C|undefined>;
-    close(id: C['id'], code?: number, reason?: string): Promise<void>;
-    closeAll(code?: number, reason?: string): Promise<void>;
-    send(id: C['id'], message: Message): Promise<void>;
-    sendJson(id: C['id'], message: Message): Promise<void>;
-    sendError(id: C['id'], message: Message, code?: number, reason?: string): Promise<void>;
-    broadcastMessage(message: Message, exceptions?: C['id'][]): Promise<void>;
-    broadcastJsonMessage(message: Message, exceptions?: C['id'][]): Promise<void>;
-    broadcastError(message: Message, code?: number, reason?: string, exceptions?: C['id'][]): Promise<void>;
+    getConnection(namespace: string, id: C['id']): Promise<C|undefined>;
+    close(namespace: string, id: C['id'], code?: number, reason?: string): Promise<void>;
+    closeAll(namespace: string, code?: number, reason?: string): Promise<void>;
+    send(namespace: string, id: C['id'], message: Message): Promise<void>;
+    sendJson(namespace: string, id: C['id'], message: Message): Promise<void>;
+    sendError(namepsace: string, id: C['id'], message: Message, code?: number, reason?: string): Promise<void>;
+    broadcastMessage(namespace: string, message: Message, exceptions?: C['id'][]): Promise<void>;
+    broadcastJsonMessage(namespace: string, message: Message, exceptions?: C['id'][]): Promise<void>;
+    broadcastError(namespace: string, message: Message, code?: number, reason?: string, exceptions?: C['id'][]): Promise<void>;
 }

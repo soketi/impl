@@ -22,7 +22,11 @@
     "dep-check": "aegir run dep-check",
     "npm:install": "aegir exec --bail false npm -- install",
     "npm:release": "aegir exec --bail false npm -- publish",
-    "release:rc": "aegir release-rc"
+    "release:rc": "aegir release-rc",
+    "with:node": "node --experimental-specifier-resolution=node --trace-warnings",
+    "server:libp2p:basic": "npm run with:node -- packages/servers/dist/src/servers/libp2p-server.js",
+    "server:libp2p:basic-dev": "DEBUG=libp2p:* npm run server:libp2p:basic",
+    "server:libp2p:docker-rebuild": "docker-compose build --no-cache libp2p && docker-compose down && docker-compose up -d"
   },
   "devDependencies": {
     "aegir": "^40.0.1"

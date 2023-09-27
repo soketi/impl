@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . /app
 
 RUN npm ci ; \
-    npm run npm:install ; \
+    npm run clean ; \
     npm run build
 
 ENV NODE_OPTIONS="--es-module-specifier-resolution=node --experimental-vm-modules"

@@ -12,7 +12,7 @@ import { type ProspectingRoute } from '@soketi/impl-interfaces';
 
 type Libp2pServices = {
     pubsub: PubSub<GossipsubEvents>;
-    dht: DualKadDHT;
+    dht?: DualKadDHT;
 };
 
 export class IpfsProspector<
@@ -92,10 +92,10 @@ export class IpfsProspector<
     }
 
     async startup(): Promise<void> {
-        //
+        await super.startup();
     }
 
     async cleanup(): Promise<void> {
-        //
+        await super.cleanup();
     }
 }

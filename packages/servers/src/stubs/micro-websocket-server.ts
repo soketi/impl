@@ -14,6 +14,7 @@ export interface WebSocketData<CID extends string = string> {
     id: CID;
     ip?: string;
     ip2?: string;
+    namespace: string;
 }
 
 export class MicroWebsocketServer<
@@ -29,48 +30,75 @@ export class MicroWebsocketServer<
     async start(signalHandler?: () => Promise<void>): Promise<void> {
         return new Promise(async resolve => {
             this.server = App()
-                .ws<WebSocketData<CID>>('/*', {
+                .ws<WebSocketData<CID>>('/:namespace', {
                     sendPingsAutomatically: true,
                     idleTimeout: 120,
                     close: async (ws, code, message) => {
-                        const { id } = ws.getUserData();
-                        const connection = await this.connections.getConnection(id);
+                        const { id, namespace } = ws.getUserData();
+                        const connection = await this.connections.getConnection(namespace, id);
 
                         if (!connection) {
                             return;
                         }
 
-                        await this.connections.removeConnection(connection);
+                        await this.connections.removeConnection(connection, async () => {
+                            await this.gossiper.unsubscribeFromNamespace(namespace);
+                        });
 
                         console.warn(`[${id}] Closed: ${Utils.ab2str(message)} (${code})`);
                     },
                     open: async (ws) => {
-                        const { id } = ws.getUserData();
+                        const { id, namespace } = ws.getUserData();
 
-                        const connection = new Connection(id, ws, {
-                            close: async (code, reason) => ws.end(code, reason),
+                        const connection = new Connection(id, namespace, ws, {
+                            close: async (code, reason) => {
+                                try {
+                                    ws.end(code, reason);
+                                } catch (e) {
+                                    //
+                                }
+                            },
                             send: async (message) => {
                                 ws.send(JSON.stringify(message), false, true);
-                            }
+                            },
                         });
 
+                        if (!this.connections.hasNamespace(namespace)) {
+                            // Subscribe to this namespace.
+                            await this.gossiper.subscribeToNamespace(namespace, async (data) => {
+                                // In case a message was broadcasted by a connection on this namespace,
+                                // we will be notified. This way, we can broadcast the message to our local connections too.
+                                // We are 100% sure that the message was not sent from one of our connections, because
+                                // the self-broadcast is disabled.
+                                if (data.event === 'message:incoming') {
+                                    this.connections.broadcastJsonMessage(
+                                        namespace,
+                                        JSON.parse(data.payload?.message as string),
+                                    );
+                                }
+                            });
+                        }
+
                         await this.connections.newConnection(connection);
+                        await this.gossiper.announceNewConnection(namespace, id);
+
                         console.log(`New connection: ${id}`);
                     },
                     message: async (ws, message, isBinary) => {
-                        const { id } = ws.getUserData();
-
-                        this.connections.broadcastMessage(message, [id]);
-
+                        const { id, namespace } = ws.getUserData();
                         const msg = Utils.ab2str(message);
+
+                        this.connections.broadcastMessage(namespace, msg, [id]);
+                        this.gossiper.announceNewMessage(namespace, id, msg);
+
                         console.log(`[${id}] ${isBinary ? 'Binary' : 'Text'} message: ${msg}`);
                     },
                     subscription: (ws, topic, newCount, oldCount) => {
                         // TODO: Implement?
                     },
                     ping: async (ws, message) => {
-                        const { id } = ws.getUserData();
-                        const connection = await this.connections.getConnection(id);
+                        const { id, namespace } = ws.getUserData();
+                        const connection = await this.connections.getConnection(namespace, id);
 
                         if (!connection) {
                             return;
@@ -80,8 +108,8 @@ export class MicroWebsocketServer<
                         console.log(`[${id}] Ping: ${Utils.ab2str(message)}`);
                     },
                     pong: async (ws, message) => {
-                        const { id } = ws.getUserData();
-                        const connection = await this.connections.getConnection(id);
+                        const { id, namespace } = ws.getUserData();
+                        const connection = await this.connections.getConnection(namespace, id);
 
                         if (!connection) {
                             return;
@@ -96,6 +124,7 @@ export class MicroWebsocketServer<
                                 ip: Utils.ab2str(res.getRemoteAddressAsText()),
                                 ip2: Utils.ab2str(res.getProxiedRemoteAddressAsText()),
                                 id: String(randomUUID()),
+                                namespace: req.getParameter(0),
                             },
                             req.getHeader('sec-websocket-key'),
                             req.getHeader('sec-websocket-protocol'),
@@ -107,7 +136,7 @@ export class MicroWebsocketServer<
 
             await super.start(signalHandler);
 
-            this.server.listen(6001, (socket) => {
+            this.server.listen(Number(process.env.PORT || 6001), (socket) => {
                 this.socket = socket;
                 console.log('Listening on port 6001...');
                 resolve();

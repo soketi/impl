@@ -16,6 +16,7 @@ export class Connection<
 
     constructor(
         public id: ID,
+        public namespace: string,
         public connection: NativeConnection,
         public handlers: NativeConnectionHandlers<Message>,
     ) {
@@ -45,10 +46,8 @@ export class Connection<
             const m = JSON.stringify(message);
             this.send(m as Message);
         } catch (e) {
-            //
+            this.send(message);
         }
-
-        this.send(message);
     }
 
     async sendError(message: Message, code?: number, reason?: string): Promise<void> {

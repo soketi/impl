@@ -1,32 +1,46 @@
 version: '3'
 
 networks:
-  soketi:
+  libp2p:
     driver: bridge
 
 services:
-  libp2p-local:
+  libp2p:
     image: soketi/server:libp2p-local
     deploy:
       replicas: 3
+      rollback_config:
+        delay: 5s
+        parallelism: 1
+        order: stop-first
+        failure_action: rollback
+      update_config:
+        delay: 5s
+        parallelism: 3
+        order: stop-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     build:
       context: .
       dockerfile: Dockerfile.dev
     entrypoint:
-        - node
-        - --experimental-specifier-resolution=node
-        - --trace-warnings
-        - --experimental-vm-modules
-        - packages/servers/dist/src/servers/libp2p-server.js
+        - npm
+        - run
+        - server:libp2p:basic-dev
     ports:
-      - 6001-6003:6001
-      - 7001-7003:7001
+      - target: 6001
+        published: 6001-6003
     environment:
-      - DEBUG=libp2p:*
+      - PORT=6001
+      - SOKETI_P2P_ADDRESSES=/ip4/0.0.0.0/tcp/0,/ip4/0.0.0.0/tcp/0/ws
+    networks:
+      - libp2p
     ulimits:
       nproc: 65535
       nofile:
         soft: 20000
         hard: 40000
-    networks:
-      - soketi

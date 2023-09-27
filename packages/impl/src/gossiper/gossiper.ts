@@ -2,71 +2,93 @@ import {
     type Gossiper as GossiperInterface,
     type Connection,
     type GossipTopicHandler,
+    type Announcement,
 } from '@soketi/impl-interfaces';
 
-export type ConnAnnouncementPayload<
+export type DefaultPayload<
     ConnectionID extends Connection['id'] = Connection['id'],
-> = Partial<{
-    connectionId: ConnectionID;
-}> & Record<string, unknown>;
+    T = Record<string, unknown>,
+> = {
+    connectionId?: ConnectionID;
+    message?: any;
+} & T;
 
 export abstract class Gossiper<
     ConnectionID extends Connection['id'] = Connection['id'],
-    AnnouncementPayload = ConnAnnouncementPayload<ConnectionID>,
-> implements GossiperInterface<
-    ConnectionID,
-    AnnouncementPayload
-> {
+    AnnouncementPayload extends DefaultPayload<ConnectionID> = DefaultPayload<ConnectionID>,
+> implements GossiperInterface<ConnectionID, AnnouncementPayload> {
     announcementHandlers = new Map<
         string,
-        GossipTopicHandler<AnnouncementPayload>
+        GossipTopicHandler<Announcement<AnnouncementPayload>>
     >;
 
     abstract announce(
+        namespace: string,
         event: string,
         payload: AnnouncementPayload,
     ): Promise<void>;
 
-    subscribeToAnnouncement(
-        event: string,
-        handler: (payload: AnnouncementPayload) => Promise<void>,
-    ): void {
-        this.announcementHandlers.set(event, {
-            event,
+    async handleAnnouncement(
+        namespace: string,
+        data: Announcement<AnnouncementPayload>,
+    ): Promise<void> {
+        const handler = this.announcementHandlers.get(namespace);
+
+        if (!handler || !handler.handler) {
+            return;
+        }
+
+        await handler.handler(data);
+    }
+
+    async subscribeToNamespace(
+        namespace: string,
+        handler?: (data: Announcement<AnnouncementPayload>) => Promise<void>,
+    ): Promise<void> {
+        this.announcementHandlers.set(`${namespace}`, {
+            namespace,
             handler,
         });
     }
 
-    async handleAnnouncement(
-        event: string,
-        payload: AnnouncementPayload,
+    async unsubscribeFromNamespace(
+        namespace: string,
     ): Promise<void> {
-        const handler = this.announcementHandlers.get(event);
-
-        if (!handler) {
-            return;
-        }
-
-        await handler.handler(payload);
+        this.announcementHandlers.delete(`${namespace}`);
     }
 
     async announceNewConnection(
+        namespace: string,
         connectionId: ConnectionID,
-        payload: AnnouncementPayload,
+        payload?: Partial<AnnouncementPayload>,
     ): Promise<void> {
-        return this.announce('connection:new', {
+        this.announce(namespace, 'connection:new', {
             connectionId,
-            ...payload,
+            ...((payload || {}) as AnnouncementPayload),
         });
     }
 
     async announceEviction(
+        namespace: string,
         connectionId: ConnectionID,
-        payload: AnnouncementPayload,
+        payload?: Partial<AnnouncementPayload>,
     ): Promise<void> {
-        return this.announce('connection:eviction', {
+        this.announce(namespace, 'connection:eviction', {
             connectionId,
-            ...payload,
+            ...((payload || {}) as AnnouncementPayload),
+        });
+    }
+
+    announceNewMessage(
+        namespace: string,
+        connectionId: ConnectionID,
+        message: any,
+        payload?: Partial<AnnouncementPayload>,
+    ): Promise<void> {
+        return this.announce(namespace, 'message:incoming', {
+            connectionId,
+            message,
+            ...((payload || {}) as AnnouncementPayload),
         });
     }
 
