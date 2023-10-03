@@ -1,13 +1,11 @@
 import { LocalBrain } from '@soketi/impl/brain';
-import { IpfsGossiper } from '@soketi/impl/gossiper';
-import { Connections } from '@soketi/impl/ws';
-// import { yamux } from '@chainsafe/libp2p-yamux';
+import { PusherIpfsGossiper } from '@soketi/pusher-impl/gossiper';
 import { mplex } from '@libp2p/mplex';
 import { mdns } from '@libp2p/mdns';
 import { noise }  from '@chainsafe/libp2p-noise';
 import { tcp } from '@libp2p/tcp';
 import { kadDHT } from '@libp2p/kad-dht';
-import { MicroWebsocketServer } from '../stubs';
+import { PusherMicroWebsocketServer } from '../stubs';
 import { createLibp2p } from 'libp2p';
 import { gossipsub } from '@chainsafe/libp2p-gossipsub';
 import { webSockets } from '@libp2p/websockets';
@@ -22,6 +20,8 @@ import { type GossipsubEvents } from '@chainsafe/libp2p-gossipsub';
 import { type PubSub } from '@libp2p/interface/pubsub';
 import { type IdentifyService } from 'libp2p/identify';
 import { type DualKadDHT } from '@libp2p/kad-dht';
+import { PusherConnections } from '@soketi/pusher-impl/ws';
+import { App, StaticAppsManager } from '@soketi/pusher-impl/apps';
 
 type Libp2pServices = {
     pubsub: PubSub<GossipsubEvents>;
@@ -95,13 +95,6 @@ type Libp2pServices = {
         metrics: prometheusMetrics({
             collectDefaultMetrics: true,
         }),
-        // connectionProtector: preSharedKey({
-        //     psk: (() => {
-        //         const swarmKey = new Uint8Array(95);
-        //         generateKey(swarmKey);
-        //         return swarmKey;
-        //     })(),
-        // }),
         connectionManager: {
             maxConnections: 100,
             minConnections: 1,
@@ -117,14 +110,25 @@ type Libp2pServices = {
         start: false,
     });
 
-    const connections = new Connections();
-    const brain = new LocalBrain();
-    const gossiper = new IpfsGossiper(helia);
+    const appsManager = new StaticAppsManager([
+        await App.load({
+            id: 'app-id',
+            key: 'app-key',
+            secret: 'app-secret',
+            enabled: true,
+            enableClientMessages: true,
+        }) as unknown as Required<App>,
+    ]);
 
-    const server = new MicroWebsocketServer(
+    const connections = new PusherConnections(appsManager, helia);
+    const brain = new LocalBrain();
+    const gossiper = new PusherIpfsGossiper(helia);
+
+    const server = new PusherMicroWebsocketServer(
         brain,
         gossiper,
         connections,
+        appsManager,
     );
 
     helia.libp2p.addEventListener('start', async () => {

@@ -2,19 +2,16 @@ import {
     type Brain,
     type Connections,
     type Gossiper,
-    type Prospector
 } from '@soketi/impl-interfaces';
 
 export abstract class Server<
     Cs extends Connections = Connections,
     B extends Brain = Brain,
     G extends Gossiper = Gossiper,
-    P extends Prospector = Prospector,
 > {
     constructor(
         public readonly brain: B,
         public readonly gossiper: G,
-        public readonly prospector: P,
         public readonly connections: Cs,
     ) {
         //
@@ -23,7 +20,6 @@ export abstract class Server<
     async start(signalHandler?: () => Promise<void>): Promise<void> {
         this.registerSignals(signalHandler);
 
-        await this.prospector.startup();
         await this.brain.startup();
         await this.gossiper.startup();
     }
@@ -53,7 +49,6 @@ export abstract class Server<
     async cleanup(): Promise<void> {
         await this.gossiper.cleanup();
         await this.brain.cleanup();
-        await this.prospector.cleanup();
     }
 
     registerSignals(handler?: () => Promise<void>) {

@@ -22,6 +22,12 @@ export abstract class Gossiper<
         GossipTopicHandler<Announcement<AnnouncementPayload>>
     >;
 
+    async peers(): Promise<Record<string, any>> {
+        return {
+            //
+        };
+    }
+
     abstract announce(
         namespace: string,
         event: string,

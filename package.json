@@ -25,7 +25,9 @@
     "release:rc": "aegir release-rc",
     "with:node": "node --experimental-specifier-resolution=node --trace-warnings",
     "server:libp2p:basic": "npm run with:node -- packages/servers/dist/src/servers/libp2p-server.js",
+    "server:libp2p:pusher": "npm run with:node -- packages/servers/dist/src/servers/libp2p-pusher-server.js",
     "server:libp2p:basic-dev": "DEBUG=libp2p:* npm run server:libp2p:basic",
+    "server:libp2p:pusher-dev": "DEBUG=libp2p:* npm run server:libp2p:pusher",
     "server:libp2p:docker-rebuild": "docker-compose build --no-cache libp2p && docker-compose down && docker-compose up -d"
   },
   "devDependencies": {

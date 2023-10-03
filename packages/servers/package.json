@@ -25,10 +25,15 @@
     "build": "aegir build"
   },
   "devDependencies": {
+    "@types/async": "^3.2.21",
     "aegir": "^40.0.8"
   },
   "dependencies": {
-    "@soketi/impl": "^1.0.0"
+    "@soketi/impl": "^1.0.0",
+    "@soketi/pusher-impl": "^1.0.0",
+    "async": "^3.2.4",
+    "query-string": "^8.1.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.24.0"
   },
   "type": "module",
   "types": "dist/src/index.d.ts",

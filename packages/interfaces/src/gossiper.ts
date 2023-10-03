@@ -14,6 +14,7 @@ export interface Gossiper<
     ConnectionID extends Connection['id'] = Connection['id'],
     AnnouncementPayload = Record<string, unknown>,
 > {
+    peers(): Promise<Record<string, unknown>>;
 
     subscribeToNamespace(
         namespace: string,

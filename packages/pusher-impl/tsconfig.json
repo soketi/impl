@@ -8,10 +8,10 @@
     "strict": true,
     "removeComments": true,
     "outDir": "./dist",
+    "verbatimModuleSyntax": true
   },
   "references": [
     { "path": "../interfaces" },
-    { "path": "../impl" },
-    { "path": "../pusher-impl" }
+    { "path": "../impl" }
   ]
 }

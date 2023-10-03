@@ -10,7 +10,7 @@ export class Connections<
 > implements ConnectionsInterface<C, Message> {
     readonly connections = new Map<string, Map<C['id'], C>>();
 
-    namespace(namespace: string): Map<string, C> {
+    namespace(namespace: string): Map<C['id'], C> {
         if (!this.hasNamespace(namespace)) {
             this.connections.set(namespace, new Map<string, C>());
         }
@@ -27,6 +27,7 @@ export class Connections<
     }
 
     async removeConnection(conn: C, onEmptyNamespace?: () => Promise<void>): Promise<void> {
+        conn.clearTimeout();
         this.namespace(conn.namespace).delete(conn.id);
 
         if (this.connections.get(conn.namespace)?.size === 0) {
@@ -75,40 +76,70 @@ export class Connections<
         );
     }
 
-    async send(
+    async send<M>(
         namespace: string,
         id: C['id'],
-        message: Message,
+        message: M,
     ): Promise<void> {
-        (await this.getConnection(namespace, id))?.send(message);
+        (await this.getConnection(namespace, id))?.send<M>(message);
     }
 
-    async sendJson(
+    async sendJson<M>(
         namespace: string,
         id: C['id'],
-        message: Message,
+        message: M,
     ): Promise<void> {
-        (await this.getConnection(namespace, id))?.sendJson(message);
+        (await this.getConnection(namespace, id))?.sendJson<M>(message);
     }
 
-    async sendError(
+    async sendError<M>(
         namespace: string,
         id: C['id'],
-        message: Message,
+        message: M,
         code?: number,
         reason?: string,
     ): Promise<void> {
-        (await this.getConnection(namespace, id))?.sendError(message, code, reason);
+        (await this.getConnection(namespace, id))?.sendError<M>(message, code, reason);
     }
 
-    async broadcastMessage(
+    async sendThenClose<M>(
         namespace: string,
-        message: Message,
+        id: C['id'],
+        message: M,
+        code?: number,
+        reason?: string,
+    ): Promise<void> {
+        (await this.getConnection(namespace, id))?.sendThenClose<M>(message, code, reason);
+    }
+
+    async sendJsonThenClose<M>(
+        namespace: string,
+        id: C['id'],
+        message: M,
+        code?: number,
+        reason?: string,
+    ): Promise<void> {
+        (await this.getConnection(namespace, id))?.sendJsonThenClose<M>(message, code, reason);
+    }
+
+    async sendErrorThenClose<M>(
+        namespace: string,
+        id: C['id'],
+        message: M,
+        code?: number,
+        reason?: string,
+    ): Promise<void> {
+        (await this.getConnection(namespace, id))?.sendErrorThenClose<M>(message, code, reason);
+    }
+
+    async broadcastMessage<M>(
+        namespace: string,
+        message: M,
         exceptions?: C['id'][],
     ): Promise<void> {
         if (!exceptions || exceptions.length === 0) {
             return Promise.allSettled(
-                [...(this.namespace(namespace).values() || [])].map(conn => conn.send(message)),
+                [...(this.namespace(namespace).values() || [])].map(conn => conn.send<M>(message)),
             ).then(() => {
                 //
             });
@@ -117,18 +148,18 @@ export class Connections<
         await Promise.allSettled(
             [...(this.namespace(namespace).values() || [])]
                 .filter(conn => !exceptions.includes(conn.id))
-                .map(conn => conn.send(message)),
+                .map(conn => conn.send<M>(message)),
         );
     }
 
-    async broadcastJsonMessage(
+    async broadcastJsonMessage<M>(
         namespace: string,
-        message: Message,
+        message: M,
         exceptions?: C['id'][],
     ): Promise<void> {
         if (!exceptions || exceptions.length === 0) {
             return Promise.allSettled(
-                [...(this.namespace(namespace).values() || [])].map(conn => conn.sendJson(message)),
+                [...(this.namespace(namespace).values() || [])].map(conn => conn.sendJson<M>(message)),
             ).then(() => {
                 //
             });
@@ -137,20 +168,20 @@ export class Connections<
         await Promise.allSettled(
             [...(this.namespace(namespace).values() || [])]
                 .filter(conn => !exceptions.includes(conn.id))
-                .map(conn => conn.sendJson(message)),
+                .map(conn => conn.sendJson<M>(message)),
         );
     }
 
-    async broadcastError(
+    async broadcastError<M>(
         namespace: string,
-        message: Message,
+        message: M,
         code?: number,
         reason?: string,
         exceptions?: C['id'][],
     ): Promise<void> {
         if (!exceptions || exceptions.length === 0) {
             return Promise.allSettled(
-                [...(this.namespace(namespace).values() || [])].map(conn => conn.sendError(message, code, reason)),
+                [...(this.namespace(namespace).values() || [])].map(conn => conn.sendError<M>(message, code, reason)),
             ).then(() => {
                 //
             });
@@ -159,7 +190,7 @@ export class Connections<
         await Promise.allSettled(
             [...(this.namespace(namespace).values() || [])]
                 .filter(conn => !exceptions.includes(conn.id))
-                .map(conn => conn.sendError(message, code, reason)),
+                .map(conn => conn.sendError<M>(message, code, reason)),
         );
     }
 }

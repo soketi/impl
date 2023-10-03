@@ -7,7 +7,6 @@ import {
     type Brain,
     type Connections,
     type Gossiper,
-    type Prospector
 } from '@soketi/impl-interfaces';
 
 export interface WebSocketData<CID extends string = string> {
@@ -22,15 +21,23 @@ export class MicroWebsocketServer<
     Cs extends Connections = Connections,
     B extends Brain = Brain,
     G extends Gossiper = Gossiper,
-    P extends Prospector = Prospector,
-> extends Server<Cs, B, G, P> {
+> extends Server<Cs, B, G> {
     server!: TemplatedApp;
     socket: any;
 
+    constructor(
+        public readonly brain: B,
+        public readonly gossiper: G,
+        public readonly connections: Cs,
+    ) {
+        super(brain, gossiper, connections);
+
+        this.server = App();
+    }
+
     async start(signalHandler?: () => Promise<void>): Promise<void> {
         return new Promise(async resolve => {
-            this.server = App()
-                .ws<WebSocketData<CID>>('/:namespace', {
+            this.server.ws<WebSocketData<CID>>('/:namespace', {
                     sendPingsAutomatically: true,
                     idleTimeout: 120,
                     close: async (ws, code, message) => {
@@ -133,6 +140,12 @@ export class MicroWebsocketServer<
                         );
                     },
                 });
+
+            this.server.get('/p2p', async (res, req) => {
+                res.writeHeader('Content-Type', 'application/json');
+                res.writeStatus('200 OK');
+                res.end(JSON.stringify(await this.gossiper.peers()));
+            });
 
             await super.start(signalHandler);
 
