@@ -1,0 +1,17 @@
+{
+  "extends": "aegir/src/config/tsconfig.aegir.json",
+  "include": [
+    "types",
+    "src"
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "removeComments": true,
+    "outDir": "./dist",
+    "verbatimModuleSyntax": true
+  },
+  "references": [
+    { "path": "../interfaces" },
+    { "path": "../impl" }
+  ]
+}

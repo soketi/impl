@@ -1,0 +1,60 @@
+{
+  "name": "@soketi/servers",
+  "version": "1.0.0",
+  "description": "TypeScript boilerplate to start and customize your own server implementation. Made with ❤️ at Soketi.",
+  "author": "soketi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soketi/impl"
+  },
+  "keywords": [
+    "soketi",
+    "websocket",
+    "typescript",
+    "boilerplate",
+    "uWebSockets.js",
+    "pusher",
+    "pusher-js"
+  ],
+  "scripts": {
+    "aegir": "aegir",
+    "clean": "aegir clean",
+    "lint": "aegir lint --bail false",
+    "dep-check": "aegir dep-check",
+    "build": "aegir build"
+  },
+  "devDependencies": {
+    "@types/async": "^3.2.21",
+    "aegir": "^40.0.8"
+  },
+  "dependencies": {
+    "@soketi/impl": "^1.0.0",
+    "@soketi/pusher-impl": "^1.0.0",
+    "async": "^3.2.4",
+    "query-string": "^8.1.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.24.0"
+  },
+  "type": "module",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "src",
+    "dist",
+    "!dist/test",
+    "!**/*.tsbuildinfo"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "sourceType": "module"
+    }
+  },
+  "engines": {
+    "node": ">=18.16.0"
+  }
+}

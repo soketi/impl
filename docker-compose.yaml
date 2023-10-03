@@ -1,0 +1,66 @@
+version: '3'
+
+networks:
+  libp2p:
+    driver: bridge
+
+services:
+  #kubo:
+  #  image: ipfs/kubo:release
+  #  networks:
+  #    - libp2p
+  #  ports:
+  #    - 8080:8080 # proxy this
+  #    - 8081:8081 # proxy this
+  #    - 5001:5001 # must be private
+  #    - 4001:4001
+  #    - 4001:4001/udp
+  #  # volumes:
+  #  #   - .kubo/config:/data/ipfs/config
+  libp2p:
+    image: soketi/server:libp2p-local
+    deploy:
+      replicas: 5
+      mode: replicated
+      rollback_config:
+        delay: 5s
+        parallelism: 1
+        order: stop-first
+        failure_action: rollback
+        monitor: 10s
+      update_config:
+        delay: 5s
+        parallelism: 1
+        order: stop-first
+        failure_action: rollback
+        monitor: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    entrypoint:
+        - npm
+        - run
+        - server:libp2p:pusher
+    ports:
+      - target: 6001
+        published: 6001-6005
+    environment:
+      - PORT=6001
+      - SOKETI_P2P_ADDRESSES=/ip4/0.0.0.0/tcp/0,/ip4/0.0.0.0/tcp/0/ws
+    networks:
+      - libp2p
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6001/p2p"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
